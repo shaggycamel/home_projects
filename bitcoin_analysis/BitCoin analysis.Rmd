@@ -1,0 +1,359 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Define function to increment chart numbers
+chartincrement <- function(){
+  i <<- i + 1
+}
+```
+
+```{r}
+# Define basic series plot function
+my_series <- function(tss, title){
+  plot(tss, xlab = "Year", ylab = "Value", main = paste0("Figure ", i, ": ", title), type = "l")
+  lm1 <- lm(tss ~ time(tss))
+  abline(lm1, col="green")
+  abline(h = mean(tss), col = "red")
+  chartincrement()
+}
+```
+
+```{r}
+# Define function to combine: QQplot, histogram, p/acf, shapiro test, adf test
+norm_charts <- function(tss, lags, title){
+  par(mfrow = c(2,2))
+  qqnorm(tss, main = "QQ Plot")
+  qqline(tss, col = "blue")
+  hist(tss, main = "Histogram", xlab = "Bitcoin Value")
+  acf(tss, lag.max = lags, main = paste0("ACF. Lags = ", lags))
+  pacf(tss, lag.max = lags, main = paste0("PACF. Lags = ", lags))
+  mtext(paste0("Figure ", i, ": ", title), side = 3, line = -1, outer = TRUE)
+  print(shapiro.test(tss))
+  print(adfTest(tss, lags = ar(tss)$order))
+  chartincrement()
+}
+```
+
+
+
+```{r}
+# Define function for residual analysis
+residual.analysis <- function(model, std = TRUE,start = 2, class = c("ARIMA","GARCH","ARMA-GARCH")[1]){
+  library(FitAR)
+  if (class == "ARIMA"){
+    if (std == TRUE){
+      res.model = rstandard(model)
+    }else{
+      res.model = residuals(model)
+    }
+  }else if (class == "GARCH"){
+    res.model = model$residuals[start:model$n.used]
+  }else if (class == "ARMA-GARCH"){
+      res.model = model@fit$residuals
+  }else {
+    stop("The argument 'class' must be either 'ARIMA' or 'GARCH' ")
+  }
+  par(mfrow=c(3,2))
+  plot(res.model,type='o',ylab='Standardised residuals', main="Time series plot of standardised residuals")
+  abline(h=0)
+  hist(res.model,main="Histogram of standardised residuals")
+  acf(res.model,main="ACF of standardised residuals")
+  pacf(res.model,main="PACF of standardised residuals")
+  qqnorm(res.model,main="QQ plot of standardised residuals")
+  qqline(res.model, col = 2)
+  k=0
+  LBQPlot(res.model, lag.max = 30, StartLag = k + 1, k = 0, SquaredQ = FALSE)
+  mtext(paste0("Figure ", i, ": ", toString(model)," ", toString(model$call$method), " Residual Analysis"), side = 3, line = -1, outer = TRUE)
+  print(shapiro.test(res.model))
+  chartincrement()
+}
+```
+
+```{r}
+# Define function to combine multiplie McLeod Li Plots
+McL <- function(res, model){
+  par(mfrow = c(2,2))
+  for (l in 1:length(res)){
+    McLeod.Li.test(y = res[[l]], main = paste0(toString(model[[l]]), model[[l]]$call$method, " McLeod Li"))
+  }
+  mtext(paste0("Figure ", i, ": McLeod Li test on promising models"), side = 3, line = -1, outer = TRUE)
+  chartincrement()
+}
+```
+
+```{r}
+# Define function to fit GARCH model
+garcher <- function(qg, pg, diff, pa, qa, tss, parameter){
+  m <- paste0("ARIMA(", pa, diff, qa,") + ARCH(",qg,",", pg, ")")
+  if (is.null(parameter) == TRUE){
+      g.model <-ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(qg, pg)),  
+                  mean.model = list(armaOrder = c(pa,qa), include.mean = FALSE), 
+                  distribution.model = "norm")
+  }
+  else {
+  g.model <-ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(qg, pg)),  
+                  mean.model = list(armaOrder = c(pa,qa), include.mean = FALSE), 
+                  distribution.model = "norm", fixed.pars=list(parameter=0))
+  }
+  g.model <-ugarchfit(spec = g.model,data = tss)
+  print(m)
+  print(round(g.model@fit$robust.matcoef,3))
+  print("")
+  par(mfrow = c(2,2))
+  plot(g.model, which = 8)
+  plot(g.model, which = 9)
+  plot(g.model, which = 10)
+  plot(g.model, which = 11)
+  mtext(paste0("Figure ", i, ": ", m, " Residual Plots"), side = 3, line = -1, outer = TRUE)
+  chartincrement()
+  return(g.model)
+}
+```
+
+```{r}
+# Define function to fit forecast to models
+g_forecast <- function(model, title){
+  forc <- ugarchforecast(model, n.ahead = 10)
+  #forc@model$modeldata$index <- seq(as.Date('2013-04-28'),as.Date('2019-02-24'),by = 1)
+  par(mfrow = c(1,2))
+  plot(forc, which = 1)
+  plot(forc, which = 3)
+  print(forc)
+  mtext(paste0("Figure ", i, ": ", title), side = 3, line = -1, outer = TRUE)
+  chartincrement()
+  return(forc)
+}
+```
+
+```{r}
+# Define function to fit MASE
+MASE = function(observed , fitted ){
+  Y.t = observed
+  n = length(fitted)
+  e.t = Y.t - fitted
+  sum = 0 
+  for (i in 2:n){
+    sum = sum + abs(Y.t[i] - Y.t[i-1] )
+  }
+  q.t = e.t / (sum/(n-1))
+  MASE = data.frame( MASE = mean(abs(q.t)))
+  return(list(MASE = MASE))
+}
+```
+
+```{r}
+#### LINUX 
+pkgs <- c('XML', 'RCurl', 'lubridate', 'TSA', 'fUnitRoots', 'lmtest', 'FitAR', 'forecast', 'ggplot2', 'rugarch', 'knitr', 'dplyr')
+invisible(lapply(pkgs, require, character.only = T))
+i <- 1
+url <- paste0("https://coinmarketcap.com/currencies/bitcoin/historical-data/?start=20130428&end=", gsub("-", "", Sys.Date()))
+livedata <- getURL(url)
+bc <- readHTMLTable(livedata, which = 1, stringsAsFactors = FALSE, colClasses = numeric())
+bc$Date <- mdy(bc$Date)
+colnames(bc) <- c("Date", "Open", "High", "Low", "Close", "Volume", "Market Cap")
+bc <- arrange(bc, Date)
+bc[, names(bc) %in% c("Volume", "Market Cap")] <- sapply(bc[, names(bc) %in% c("Volume", "Market Cap")], function(x) gsub(",", "", x))
+bc[, !names(bc) %in% "Date"] <- sapply(bc[, !names(bc) %in% "Date"], as.numeric)
+bc_ts <- ts(bc$Close, start = c(2013, as.numeric(format(as.Date("2013-04-28"), "%j"))), frequency = 365.25)
+bc_train <- bc_ts[1:(length(bc_ts) - 10)]
+bc_test <- bc_ts[(length(bc_ts) - 9): length(bc_ts)]
+```
+
+```{r}
+### WINDOWS
+pkgs <- c('httr', 'XML', 'rvest', 'lubridate', 'TSA', 'fUnitRoots', 'lmtest', 'FitAR', 'forecast', 'ggplot2', 'rugarch', 'knitr', 'dplyr')
+invisible(lapply(pkgs, require, character.only = T))
+i <- 1
+url <- paste0("https://coinmarketcap.com/currencies/bitcoin/historical-data/?start=20130428&end=", gsub("-", "", Sys.Date()))
+install.packages("xml2")
+livedata <- read_html(url)
+bc <- livedata %>% html_nodes("table") %>% html_table(fill = TRUE)
+bc <- as.data.frame(bc[[1]])
+bc$Date <- mdy(bc$Date)
+colnames(bc) <- c("Date", "Open", "High", "Low", "Close", "Volume", "Market Cap")
+library(dplyr)
+library(rlang)
+bc <- arrange(bc, Date)
+bc[, names(bc) %in% c("Volume", "Market Cap")] <- sapply(bc[, names(bc) %in% c("Volume", "Market Cap")], function(x) gsub(",", "", x))
+bc[, !names(bc) %in% "Date"] <- sapply(bc[, !names(bc) %in% "Date"], as.numeric)
+bc_ts <- ts(bc$Close, start = c(2013, as.numeric(format(as.Date("2013-04-28"), "%j"))), frequency = 365.25)
+bc_train <- ts(bc_ts[1:(length(bc_ts) - 10)], start = c(2013, as.numeric(format(as.Date("2013-04-28"), "%j"))), frequency = 365.25)
+bc_test <- bc_ts[(length(bc_ts) - 9): length(bc_ts)]
+```
+
+
+```{r}
+my_series(bc_train, "Trend of Bitcoin Value")
+```
+
+```{r}
+forecast(Arima(bc_ts, order = c(5,1,1)))
+plot(forecast(Arima(bc_ts, order = c(5,1,1))))
+```
+
+```{r}
+forecast(Arima(bc_ts, order = c(6,1,5)))
+plot(forecast(Arima(bc_ts, order = c(6,1,5))))
+```
+
+```{r}
+forecast(Arima(bc_ts, order = c(4,1,4)))
+plot(forecast(Arima(bc_ts, order = c(4,1,4))))
+```
+
+
+```{r}
+forecast(Arima(bc_ts, order = c(2,0,2)))
+plot(forecast(Arima(bc_ts, order = c(2,0,2))))
+```
+
+```{r}
+bitcoin_n <- ts(tail(bitcoin$Close, 200))
+plot(bitcoin_n)
+```
+
+```{r}
+plot(diff(bitcoin_n))
+adfTest(diff(bitcoin_n))
+```
+
+
+
+
+```{r}
+# Model fitting
+l <- 3
+model_list <- vector(mode="list")
+model_names <- vector()
+
+m <- 1
+ar <- 1
+while(ar <= l){
+  ma <- 1
+  while(ma <= l){
+    model_list[[m]] <- arima(bc_train, order = c(ar,1,ma), method = "ML")
+    model_names <- append(model_names,paste0(ar,"_", 1,"_",ma))
+    m <- m + 1
+    ma <- ma + 1
+  }
+  ar <- ar + 1
+}
+names(model_list) <- model_names
+```
+
+
+```{r}
+coef_list <- vector(mode = "list", length = l)
+m <- 1
+for (model in model_list) {
+  coef_list[[m]] <- coeftest(model)
+  m <- m + 1
+}
+names(coef_list) <- model_names
+```
+
+```{r}
+tbl_list <- vector(mode = "list", length = l)
+m <- 1
+for(coef in coef_list){
+  tbl <- vector()
+  for(cell in coef[,4]){
+    if(is.na(cell)){
+      tbl <- append(tbl, "NA")
+      next
+    }
+      
+    if(!is.na(cell) & cell < 0.001){
+      tbl <- append(tbl, "***")
+      next
+    }
+    
+    if(!is.na(cell) & cell < 0.01){
+      tbl <- append(tbl, "**")
+      next
+    }
+    
+    if(!is.na(cell) & cell < 0.05){
+      tbl <- append(tbl, "*")
+      next
+    }
+    
+    if(!is.na(cell) & cell < 0.1){
+      tbl <- append(tbl, ".")
+      next
+    }
+    else
+      tbl <- append(tbl, "Empty")
+  }
+  tbl_list[[m]] <- prop.table(table(tbl))
+  m <- m + 1
+}
+names(tbl_list) <- model_names
+```
+
+
+```{r}
+good_models <- vector()
+m <- 1
+for(tbl in tbl_list){
+  if((names(tbl) == "***" & length(names(tbl)) == 1)){
+    good_models <- append(good_models, names(tbl_list[m]))
+  }
+  m <- m + 1
+}
+good_models
+```
+
+```{r}
+predict_list <- vector(mode = "list")
+m <- 1
+for(predict_model in good_models){
+  parameters <- as.numeric(strsplit(predict_model, "_")[[1]])
+  ar <- parameters[1]
+  diff <- parameters[2]
+  ma <- parameters[3]
+  
+  model <- arima(bc_train,order=c(ar, diff, ma),method = "ML", xreg=data.frame (constant=seq(bc_train)))
+  n=length(bc_ts)
+  n.ahead=10 #Forecast 10 steps ahead
+  newxreg=data.frame(constant=(n+1):(n+n.ahead))
+  predicts <-predict(model, n.ahead = n.ahead, newxreg = newxreg, se.fit = FALSE)[1:n.ahead]
+  predict_list[[m]] <- predicts
+  m <- m + 1
+}
+names(predict_list) <- good_models
+predict_list
+```
+
+```{r}
+mase_list <- vector()
+m <- 1
+for (predict in predict_list) {
+  mase_list <- append(mase_list, MASE(bc_test, predict)$MASE)
+}
+names(mase_list) <- good_models
+mase_list
+```
+
+```{r}
+plot_table <- tibble(Date = bc$Date)
+plot_table$test <- c(rep(NA,length(bc_train)), bc_test)
+plot_table$train <- c(bc_train, rep(NA,10))
+plot_table$`1_1_1` <- c(rep(NA, length(bc_train)), predict_list$`1_1_1`)
+plot_table$`3_1_3` <- c(rep(NA, length(bc_train)), predict_list$`3_1_3`)
+head(plot_table)
+```
+
+```{r}
+ggplot(data = plot_table) + geom_line(mapping = aes(x = Date, y = test)) + geom_line(mapping = aes(x = Date, y = train)) + geom_line(mapping = aes(x = Date, y = `1_1_1`), colour = "red") + geom_line(mapping = aes(x = Date, y = `3_1_3`), colour = "green") + xlim(Sys.Date() - 50, Sys.Date())
+```
+
+
+```{r}
+plt <- ggplot(data = bc, aes(x = Date, y = Close))
+    plt + geom_line()
+```
+
