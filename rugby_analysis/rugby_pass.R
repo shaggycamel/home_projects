@@ -18,10 +18,12 @@ paths_allowed(paths = "https://index.rugbypass.com/")
 rPass <- read_html("https://index.rugbypass.com/")
 
 # Get tournament information
-tournament_id <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_attr(name="data-value")
-tournament_name <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_text() %>% str_trim()
-season <- "Jun-Aug 2020"
-tournaments <- as.data.frame(cbind(tournament_id, tournament_name, season))
+# tournament_id <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_attr(name="data-value")
+# tournament_name <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_text() %>% str_trim()
+# tournaments <- as.data.frame(cbind(tournament_id, tournament_name, season))
+tournaments <- read.csv("tournaments.csv", encoding = "UTF-8",
+                        col.names = c("tournament_id", "tournament_name", "season", "geolocation"),
+                        colClasses = c("character", "character", "character", "character"))
 
 # Get team information
 team_id <- rPass %>% html_nodes("#teams-drop-down") %>% html_nodes("li") %>% html_attr(name="data-value")
@@ -31,22 +33,20 @@ teams <- as.data.frame(cbind(team_id, team_name, tournament_id))
 teams <- separate_rows(teams, tournament_id)
 
 df <- left_join(teams, tournaments, by = "tournament_id")
+df <- df[complete.cases(df),]
 df <- df[, c("season", "tournament_id", "tournament_name", "team_id", "team_name")] %>% 
-  subset(grepl("aotearoa", df$tournament_name, ignore.case = TRUE))
+  subset(grepl("super", tournament_name, ignore.case = TRUE) & season == "2020")
 
 # Get player information
 players <- data.frame()
 for (tournament_row in 1:nrow(df)) {
-  tournament <- df[tournament_row, "tournament_name"]
-  team <- df[tournament_row, "team_name"]
+  tournament <- df[tournament_row, "tournament_name"] %>% str_replace_all(" ", "-") %>% str_to_lower()
+  team <- df[tournament_row, "team_name"] %>% str_to_lower() %>% str_replace_all(" ", "-")
   URL <- paste0("https://index.rugbypass.com/rpi/", tournament, "/", team, "/all/7-days/high-to-low/players/")
   
   # call player name function()
   players_temp <- player_name(URL)
   
-  # Reformat variable names for next url
-  tournament <- tournament %>% str_to_lower() %>% str_replace_all(" ", "-")
-  team <- team %>% str_to_lower() %>% str_replace_all(" ", "-")
   
   # Emtpy dataframe for loop
   p_bio <- data.frame()
@@ -68,6 +68,7 @@ for (tournament_row in 1:nrow(df)) {
     # collate rows
     p_bio <- bind_rows(p_bio, p_bio_tmp)
   }
+  p_bio$tournament_id <- as.list(df[tournament_row, "tournament_id"])
   p_bio$team_id <- as.list(df[tournament_row, "team_id"])
   p_bio$season <- as.list(df[tournament_row, "season"])
   players_temp <- left_join(players_temp, p_bio, by = "player_id")
@@ -75,7 +76,7 @@ for (tournament_row in 1:nrow(df)) {
 }
 
 # Cleaning
-players <- players %>% select(season, team_id, player_id, player_name, position, dob_ymd, height_m, weight_kg)
+players <- players %>% select(season, tournament_id, team_id, player_id, player_name, position, dob_ymd, height_m, weight_kg)
 players$weight_kg <- players$weight_kg %>% str_replace("kg", "")
 players$height_m <- players$height_m %>% str_replace("m", "")
 players <- na_if(players, "")
