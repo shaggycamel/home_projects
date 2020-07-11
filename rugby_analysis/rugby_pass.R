@@ -11,19 +11,24 @@ library(ggplot2)
 library(lubridate)
 library(tibble)
 library(purrr)
+library(RMySQL)
 
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("rugby_pass_scrape_functions.R")
 
 paths_allowed(paths = "https://index.rugbypass.com/") 
 rPass <- read_html("https://index.rugbypass.com/")
 
 # Get tournament information
-# tournament_id <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_attr(name="data-value")
-# tournament_name <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_text() %>% str_trim()
-# tournaments <- as.data.frame(cbind(tournament_id, tournament_name, season))
-tournaments <- read.csv("tournaments.csv", encoding = "UTF-8",
-                        col.names = c("tournament_id", "tournament_name", "season", "geolocation"),
-                        colClasses = c("character", "character", "character", "character"))
+tournament_id <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_attr(name="data-value")
+tournament_name <- rPass %>% html_nodes("#tournaments-drop-down") %>% html_nodes("li") %>% html_text() %>% str_trim()
+tournament_season <- read.csv("tournament_season.csv")
+tournament_season$tournament_id <- as.character(tournament_season$tournament_id)
+tournaments <- as.data.frame(cbind(tournament_id, tournament_name))
+tournaments <- left_join(tournaments, tournament_season, by = c("tournament_id"))
+tournaments <- tournaments %>% select(tournament_id, tournament_name.x, season, geolocation)
+colnames(tournaments) <- c("tournament_id", "tournament_name", "season", "geolocation")
+
 
 # Get team information
 team_id <- rPass %>% html_nodes("#teams-drop-down") %>% html_nodes("li") %>% html_attr(name="data-value")
@@ -35,7 +40,8 @@ teams <- separate_rows(teams, tournament_id)
 df <- left_join(teams, tournaments, by = "tournament_id")
 df <- df[complete.cases(df),]
 df <- df[, c("season", "tournament_id", "tournament_name", "team_id", "team_name")] %>% 
-  subset(grepl("super", tournament_name, ignore.case = TRUE) & season == "2020")
+  subset(grepl("aotearoa", tournament_name, ignore.case = TRUE) & season == "2020")
+
 
 # Get player information
 players <- data.frame()
@@ -76,6 +82,9 @@ for (tournament_row in 1:nrow(df)) {
 
 # Cleaning
 players <- players %>% select(season, tournament_id, team_id, player_id, player_name, position, dob_ymd, height_m, weight_kg)
+players$tournament_id <- unlist(players$tournament_id)
+players$team_id <- unlist(players$team_id)
+players$season <- unlist(players$season)
 players$weight_kg <- players$weight_kg %>% str_replace("kg", "")
 players$height_m <- players$height_m %>% str_replace("m", "")
 players <- na_if(players, "")
@@ -83,5 +92,14 @@ players <- na_if(players, "---")
 players$height_m <- as.double(players$height_m)
 players$weight_kg <- as.integer(players$weight_kg)
 players$dob_ymd <- as.Date(players$dob_ymd, format = "%d %b %Y")
+
+db_connection <- dbConnect(MySQL(), user="oli", password="zxc123", dbname="rugby_analysis", host="localhost")
+
+dbWriteTable(db_connection, "tournaments", tournaments)
+dbWriteTable(db_connection, "teams", teams)
+dbWriteTable(db_connection, "players", players)
+
+
+dbReadTable(db_connection, "players")
 
 
