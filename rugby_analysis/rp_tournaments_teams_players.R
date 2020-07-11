@@ -50,7 +50,7 @@ df <- df[, c("season", "tournament_id", "tournament_name", "team_id", "team_name
 players <- get_player_data(df)
 
 # Establish connection to database
-db_connection <- dbConnect(MySQL(), user="oli", password="zxc123", dbname="rugby_analysis", host="localhost")
+db_connection <- dbConnect(MySQL(), user="oli", password=Sys.getenv("MySQL_password"), dbname="rugby_analysis", host="localhost")
 
 # Write tables to database
 dbWriteTable(db_connection, "tournaments", tournaments)
