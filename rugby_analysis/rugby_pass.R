@@ -40,13 +40,12 @@ df <- df[, c("season", "tournament_id", "tournament_name", "team_id", "team_name
 # Get player information
 players <- data.frame()
 for (tournament_row in 1:nrow(df)) {
-  tournament <- df[tournament_row, "tournament_name"] %>% str_replace_all(" ", "-") %>% str_to_lower()
+  tournament <- df[tournament_row, "tournament_name"] %>% str_to_lower() %>% str_replace_all(" ", "-")
   team <- df[tournament_row, "team_name"] %>% str_to_lower() %>% str_replace_all(" ", "-")
   URL <- paste0("https://index.rugbypass.com/rpi/", tournament, "/", team, "/all/7-days/high-to-low/players/")
   
   # call player name function()
   players_temp <- player_name(URL)
-  
   
   # Emtpy dataframe for loop
   p_bio <- data.frame()
