@@ -12,6 +12,8 @@ library(lubridate)
 library(tibble)
 library(purrr)
 library(RMySQL)
+library(data.table)
+
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
