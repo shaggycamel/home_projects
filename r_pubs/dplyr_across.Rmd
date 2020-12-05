@@ -11,7 +11,7 @@ output:
 This article showcases an example of summarising a dataframe using a combination of
 the `dplyr::summarise` and `dplyr::across` functions.
 
-Within the `summarise` function it is possible to summarise numerous columns, that
+Within the `summarise` function, it is possible to summarise numerous columns that
 adhere to any condition, using clean and succinct syntax with the help of the `across`
 function.
 
@@ -35,9 +35,7 @@ Numeric columns in this dataframe are:
 ggplot2::diamonds %>% select(where(is.numeric))
 ```
 <br>
-For each numeric column, the *min*, *max* and *mean* can be calculated for each group in the **cut** column with help of the across function.
-<br>
-Summarisation is as follows:
+For each numeric column, the *min*, *max* and *mean* can be calculated for each group in the **cut** column with help of the across function. Summarisation is as follows:
 <br>
 ```{r message=FALSE}
 # With the diamonds dataframe:
