@@ -81,6 +81,9 @@ colnames(df) <- colnames(df) %>%
 df
 ```
 <br>
+Voilà! The *min*, *max* and *mean* for each **cut** group have been calculated for each numeric column, complete with sensible column names, within the diamonds dataframe.
+
+<br>
 As shown in this article, the across function allows one to carryout summarisation on many columns at once. This is very handy when wanting to summarise a large dataframe. 
 
 It is also possible for columns in the `across` function to be referenced by a naming convention. For example, if one wishes to summarise all columns in a dataset that end in a particular word, it can be achieved using the following:
