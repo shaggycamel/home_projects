@@ -1,0 +1,111 @@
+---
+title: "dplyr::across()"
+author: "shaggycamel"
+date: December 5, 2020
+output:
+  html_document:
+    df_print: paged
+---
+
+<br>
+This article showcases an example of summarising a dataframe using a combination of
+the `dplyr::summarise` and `dplyr::across` functions.
+
+Within the `summarise` function it is possible to summarise numerous columns, that
+adhere to any condition, using clean and succinct syntax with the help of the `across`
+function.
+
+Let's begin by loading the required packages...
+```{r message=FALSE}
+# "tidyverse" is a collection of packages that make up the tidy-universe
+library(tidyverse)
+
+# Packages included in tidyverse are:
+tidyverse::tidyverse_packages(include_self = FALSE)
+```
+<br>
+Most of the functions used in this article belong to the `dplyr` package.
+
+The example dataset used in this article is the `ggplot2::diamonds` dataframe, it contains information of around 54,000 diamonds.
+
+Numeric columns in this dataframe are:
+<br>
+
+```{r}
+ggplot2::diamonds %>% select(where(is.numeric))
+```
+<br>
+For each numeric column, the *min*, *max* and *mean* can be calculated for each group in the **cut** column with help of the across function.
+<br>
+Summarisation is as follows:
+<br>
+```{r message=FALSE}
+# With the diamonds dataframe:
+(df <- ggplot2::diamonds %>% 
+  
+  # for each category in the "cut" column
+  dplyr::group_by(cut) %>% 
+  
+  # calculate summaries for...
+  dplyr::summarise(
+    
+    # ...each column that:
+    dplyr::across(
+      
+      # is numeric
+      .cols = where(is.numeric)
+      
+      # returning the max, min and mean value
+      , .fns = c(min, max, mean)
+      
+      # and name columns accordingly
+      , .names = "{.fn}_{.col}"
+    )
+  )
+)
+```
+<br>
+As can be seen in the above output, column names do not reflect the summarisation function used. Instead, column names follow the logic **1_\<attribute\>**, **2_\<attribute\>**, **3_\<attribute\>** where **1**, **2** and **3** represent 
+the *min*, *max* and *mean*, respectively.
+
+Here is a workaround to fix column names:
+<br>
+```{r}
+colnames(df) <- colnames(df) %>% 
+  stringr::str_replace_all(
+    pattern = c(
+      "1" = "min"
+      , "2" = "max"
+      , "3" = "mean"
+    )
+  )
+
+df
+```
+<br>
+As shown in this article, the across function allows one to carryout summarisation on many columns at once. This is very handy when wanting to summarise a large dataframe. 
+
+It is also possible for columns in the `across` function to be referenced by a naming convention. For example, if one wishes to summarise all columns in a dataset that end in a particular word, it can be achieved using the following:
+<br>
+```{r eval=FALSE}
+dplyr::across(
+  
+  # ends with "word"
+  .cols = dplyr::ends_with("word")
+  
+  # returning the mean
+  , .fns = mean
+)
+```
+<br>
+In addition to `across` complimenting `summarise` so well, it can also be used in conjunction with `dplyr::mutate` and `dplyr::select`.
+
+Why not try out the across function today !?
+
+:D
+<br>
+<br>
+<br>
+<br>
+
+

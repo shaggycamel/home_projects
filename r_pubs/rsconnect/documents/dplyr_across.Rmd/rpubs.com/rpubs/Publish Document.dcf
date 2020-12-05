@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/700168/6eb81ccbe2354ab086091d45e9cabaf4
+bundleId: https://api.rpubs.com/api/v1/document/700168/6eb81ccbe2354ab086091d45e9cabaf4
+url: http://rpubs.com/shaggycamel/700168
+when: 1607149620.86193
