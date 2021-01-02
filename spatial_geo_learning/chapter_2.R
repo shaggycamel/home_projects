@@ -164,3 +164,4 @@ projection(new_raster)
 projection(new_raster) = "+proj=utm +zone=12 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs" # set CRS
 plot(new_raster)
 
+
