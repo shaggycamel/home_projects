@@ -118,13 +118,9 @@ new_raster <- raster(raster_filepath)
 plot(new_raster)
 
 new_raster2 <- raster(
-  nrows = 6
-  , ncols = 6
-  , res = 0.5
-  , xmn = -1.5
-  , xmx = 1.5
-  , ymn = -1.5
-  , ymx = 1.5
+  nrows = 6, ncols = 6, res = 0.5
+  , xmn = -1.5, xmx = 1.5
+  , ymn = -1.5, ymx = 1.5
   , vals = 1:36
 )
 plot(new_raster2)
@@ -138,9 +134,11 @@ plot(r_brick)
 
 # Stack
 raster_on_disk <- raster(r_brick, layer = 1)
-raster_in_memory <- raster(xmn = 301905, xmx = 335745,
-                          ymn = 4111245, ymx = 4154085, 
-                          res = 30)
+raster_in_memory <- raster(
+  xmn = 301905, xmx = 335745
+  , ymn = 4111245, ymx = 4154085
+  , res = 30
+)
 values(raster_in_memory) <- sample(seq_len(ncell(raster_in_memory)))
 crs(raster_in_memory) <- crs(raster_on_disk)
 
