@@ -1,3 +1,4 @@
+*.data
 *.Rhistory
 /r_pubs/rsconnect
 /r_pubs/*.html
