@@ -64,12 +64,12 @@ x_dist <- (st_distance(x_min, x_max) * 100)[1] %>% round()
 y_dist <- (st_distance(y_min, y_max) * 100)[1] %>% round()
 
 x_line <- st_sfc(
-  st_linestring(rbind(c(idn_box$xmin, idn_box$ymin), c(idn_box$xmax, idn_box$ymin)))
+  st_linestring(rbind(c(0, 0), c(idn_box$xmax, 0)))
   , crs = idn_rds %>% st_crs()
 )
 
 y_line <- st_sfc(
-  st_linestring(rbind(c(idn_box$xmin, idn_box$ymin), c(idn_box$xmin, idn_box$ymax)))
+  st_linestring(rbind(c(0, 0), c(0, idn_box$ymax)))
   , crs = idn_rds %>% st_crs()
 )
 
