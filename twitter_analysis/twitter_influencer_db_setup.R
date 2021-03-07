@@ -1,6 +1,4 @@
 
-library(tidyverse)
-
 # TEMP --------------------------------------------------------------------
 
 influencers <- c(
@@ -21,7 +19,7 @@ influencers <- c(
 
 influencer_id <- data.frame(
   twitter_id = character()
-  , date_included = character()
+  , research_inclusion_date = character()
   , stringsAsFactors = FALSE
 )
 # Convert date_included to date
@@ -30,12 +28,13 @@ influencer_id <- data.frame(
 # details -----------------------------------------------------------------
 
 influencer_details <- data.frame(
-  date_twitter_updated = character()
-  , twitter_id = character()
+  twitter_id = character()
   , twitter_screen_name  = character()
   , name = character()
+  , location = character()
   , twitter_creation_date = character()
   , twitter_description = character()
+  , date_twitter_updated = character()
   , stringsAsFactors = FALSE
 )
 # Convert date_twitter_updated, twitter_creation_date  to date
@@ -63,30 +62,5 @@ influencer_tweets <- data.frame(
   , stringsAsFactors = FALSE
 )
 # Convert tweet_date to timestamp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-for(i in influencers){
-  usr <- getUser(i)
-  df[nrow(df)+1, ] <- c(
-    Sys.Date() %>% toString()
-    , usr$id
-    , usr$screenName
-    , usr$name
-    , usr$location
-    
-  )
-}
 
 
