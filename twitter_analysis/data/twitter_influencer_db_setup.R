@@ -1,33 +1,39 @@
 
+
 # TEMP --------------------------------------------------------------------
 
 influencers <- c(
-  "TheEllenShow"
-  , "KimKardashian"
-  , "Cristiano"
-  , "BillGates"
-  , "BarackObama"
-  , "ArianaGrande"
-  , "katyperry"
-  , "elonmusk"
-  , "taylorswift13"
-  , "narendramodi"
+  "AlboMP"
+  , "AdamBandt"
+  , "PeterDutton_MP"
+  , "JoshFrydenburg"
+  , "GregHuntMP"
+  , "ScottMorrisonMP"
+  , "tanya_plibersek"
+  , "cporterwa"
+  , "DaveSharma"
+  , "billshortenmp"
+  , "SenatorCash"
+  , "SenatorDodson"
+  , "PaulineHansonOz"
+  , "JacquiLambie"
+  , "MarisePayne"
+  , "SenatorWong"
 )
 
 
 # id ----------------------------------------------------------------------
 
-influencer_id <- data.frame(
+influencer_id <- tibble(
   twitter_id = character()
   , research_inclusion_date = character()
-  , stringsAsFactors = FALSE
 )
 # Convert date_included to date
 
 
 # details -----------------------------------------------------------------
 
-influencer_details <- data.frame(
+influencer_details <- tibble(
   twitter_id = character()
   , twitter_screen_name  = character()
   , name = character()
@@ -35,19 +41,17 @@ influencer_details <- data.frame(
   , twitter_creation_date = character()
   , twitter_description = character()
   , date_twitter_updated = character()
-  , stringsAsFactors = FALSE
 )
 # Convert date_twitter_updated, twitter_creation_date  to date
 
 
 # friends_followers -------------------------------------------------------
 
-influencer_friends_followers <- data.frame(
+influencer_friends_followers <- tibble(
   date = character()
   , twitter_id = character()
   , follower_count = character()
   , friend_ids = character()
-  , stringsAsFactors = FALSE
 )
 # Convert follower_count to double
 # Convert friend_ids to JSON
@@ -55,11 +59,10 @@ influencer_friends_followers <- data.frame(
 
 # tweets ------------------------------------------------------------------
 
-influencer_tweets <- data.frame(
+influencer_tweets <- tibble(
   twitter_id = character()
   , tweet_date = character()
   , tweet = character()
-  , stringsAsFactors = FALSE
 )
 # Convert tweet_date to timestamp
 

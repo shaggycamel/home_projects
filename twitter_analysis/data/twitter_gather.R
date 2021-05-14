@@ -1,4 +1,10 @@
 
+# Oliver Eaton
+# Begun: 2021-05-14
+# Last updated:
+
+# File to:
+# Gather polictal tweets from Australia and New Zealand
 
 
 # Environ -----------------------------------------------------------------
@@ -6,9 +12,8 @@
 library(tidyverse)
 library(rtweet)
 
-source()
-
-
+source(here::here("data", "r_twitter_setup.R"))
+source(here::here("data", "twitter_influencer_db_setup.R"))
 
 # Get Twitter id ----------------------------------------------------------
 
@@ -38,26 +43,10 @@ influencer_details <- lookup_users(influencer_id$user_id) %>%
 
 # Get Tweets --------------------------------------------------------------
 
-t <- get_timeline(
-  influencer_id$user_id
-  # , since_id = t1 %>% filter(created_at == max(created_at)) %>% pull(status_id)
-  # , = 3200
-)
-tweets <- rbind(t, tweets)
-
+tweets <- get_timeline(influencer_id$user_id)
 
 # Get Freinds -------------------------------------------------------------
 
-for(i in 1:nrow(influencer_id)){
-  f <- get_friends(
-    influencer_id$user_id[i]
-    , retryonratelimit = TRUE 
-  )
+friends <- map_df(influencer_id$user_id, get_friends, retryonratelimit = TRUE)
   
-  if_else(
-    !exists("friends")
-    , friends <- rbind(f, friends)
-    , friends <- f
-  )
   
-}
