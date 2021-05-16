@@ -36,7 +36,7 @@ influencers <- c(
 )
 
 
-# lookup_users(influencers) %>% 
+# influencer_id <-  lookup_users(influencers) %>%
 #   select(user_id) %>%
 #   mutate(
 #     research_inclusion_date = Sys.Date()
