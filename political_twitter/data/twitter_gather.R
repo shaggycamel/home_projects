@@ -24,6 +24,9 @@ influencer_id <- dbReadTable(sql_con, "influencer_id") %>%
   arrange(user_id) %>% 
   mutate(across(ends_with("date"), as.Date))
 
+# Figure out how to handle influencers that have been
+# removed from the study
+
 
 # Get Twitter Details -----------------------------------------------------
 
@@ -53,18 +56,8 @@ new_dt <- lookup_users(influencer_id$user_id) %>%
   mutate(as_of_date = Sys.Date()) %>% 
   relocate(as_of_date)
 
-# Third compare lists second and first step
-# get indicies of differences in new_dt and append onto old_dt.
-new_indicies <- setdiff(
-  new_dt %>% select(-as_of_date)
-  , old_dt %>% select(-as_of_date)
-) %>% rownames()
-
 # Influencer twitter details
-influencer_twitter_details <- rbind(
-  new_dt[new_indicies, ]
-  , old_dt
-)
+influencer_twitter_details <- rbind(new_dt, old_dt)
 
 
 # Get Tweets --------------------------------------------------------------
@@ -77,7 +70,6 @@ old_tw <- dbReadTable(sql_con, "influencer_tweets") %>%
 tw_id <- old_tw %>% 
   group_by(user_id) %>% 
   slice_max(order_by = ~ -status_id, with_ties = FALSE) %>% 
-  arrange(user_id) %>% 
   select(user_id, status_id)
 
 # Lastly limit tweet collection from last tweet sent by each user
@@ -123,8 +115,8 @@ new_fr <- map_df(influencer_id$user_id, ~ {
 walk(influencer_id$user_id, ~{
   
   f_rem <- setdiff(
-    old_fr %>% select(contains("user_id")) %>% filter(user_id == .x)
-    , new_fr %>% filter(user_id == .x)
+    old_fr %>% filter(user_id == .x, is.na(date_friendship_ceased)) %>% select(contains("user_id"))
+    , new_fr_t %>% filter(user_id == .x)
   )
   
   old_fr$date_friendship_ceased[
@@ -139,6 +131,10 @@ influencer_friends <- rbind(
   old_fr
   , new_fr
 )
+
+
+# Figure out how to handle cases where an influencer removes a friend
+# but then reconnects with them later
 
 
 # Database ----------------------------------------------------------------
