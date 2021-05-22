@@ -1,5 +1,5 @@
 
-library(rtweet)
+# Rtweet configuration ----------------------------------------------------
 
 access_token <- "1158336653443776512-K5cOdyxK3puSZCu8SrHMr5jFnI5x4k"
 access_secret <- "1yGAKsyozNz97wsuDZoetR1xFCdCapwpMLplFWD8qaien"
@@ -15,4 +15,5 @@ twitter_token <- create_token(
   , access_secret = access_secret
 )
 
-
+# Remove all objects except
+rm(list = objects()[objects()!="twitter_token"])
