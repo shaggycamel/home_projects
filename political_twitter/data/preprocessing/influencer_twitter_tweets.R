@@ -1,4 +1,9 @@
 
+# Oliver Eaton
+# Begun: 2021-05-22
+
+# File to gather tweets from chosen political leaders.
+
 # Get Tweets --------------------------------------------------------------
 
 # First read in tweets from database
@@ -21,3 +26,6 @@ tw_new <- map2_df(
 
 # Influencer tweets
 influencer_tweets <- bind_rows(tw_new, tw_old)
+
+# Remove unused objects
+rm(tw_old, tw_new, tw_id)

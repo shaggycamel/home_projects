@@ -1,10 +1,9 @@
 
 # Oliver Eaton
 # Begun: 2021-05-14
-# Last updated:
 
-# File to:
-# Gather polictal tweets from Australia and New Zealand
+# Driver file to gather tweets from political leaders across
+# Australia and New Zealand
 
 # Environ -----------------------------------------------------------------
 

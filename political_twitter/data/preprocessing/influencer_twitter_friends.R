@@ -1,4 +1,9 @@
 
+# Oliver Eaton
+# Begun: 2021-05-22
+
+# File to gather twitter friends of chosen political leaders.
+
 # Get Friends -------------------------------------------------------------
 
 # Gather Friends function
@@ -27,6 +32,7 @@ g_frnds <- function(u_id){
   distinct(all_friends)
 }
 
+
 # First read in friends from db
 dbReadTable(sql_con, "influencer_friends") %>% 
   mutate(across(starts_with("date"), as.Date)) %>% {
@@ -41,7 +47,7 @@ fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) %>%
   rename(user_id = user, friend_user_id = user_id) 
 
 # Third compare lists from first and second step
-# New friendships
+## New friendships
 fr_new <- map_df(influencer_id$user_id, ~ {
   
   setdiff(
@@ -55,7 +61,7 @@ fr_new <- map_df(influencer_id$user_id, ~ {
   
 })
 
-# Removed friendships
+## Removed friendships
 walk(influencer_id$user_id, ~{
   
   fr_rem <- setdiff(
@@ -72,3 +78,6 @@ walk(influencer_id$user_id, ~{
 
 # Influencer friends
 influencer_friends <- bind_rows(fr_csd, fr_old, fr_new)
+
+# Remove unused objects
+rm(fr_csd, fr_old, fr_new, fr_new_tmp, g_frnds)

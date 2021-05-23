@@ -1,4 +1,9 @@
 
+# Oliver Eaton
+# Begun: 2021-05-22
+
+# File to obtain twitter mentions of chosen political leaders.
+
 # Get Mentions ------------------------------------------------------------
 
 # First read in mentions from database
@@ -41,7 +46,7 @@ mnt_new <- map2_df(
   separate_rows(mentions_user_id_single) %>%
   relocate(mentions_user_id_single, .after = mentions_user_id) %>% 
   
-  # Filter to influencers and exclude retweets
+  # Filter to exclude non-influencers and retweets
   filter(
     mentions_user_id_single %in% (influencer_id$user_id)
     , is_retweet == FALSE
@@ -56,3 +61,6 @@ influencer_mentions <- bind_rows(mnt_old, mnt_new) %>%
     order_by = c(statuses_count, quoted_retweet_count, quoted_statuses_count) 
     , with_ties = FALSE
   )
+
+# Remove unused objects
+rm(mnt_old, mnt_new, mnt_id, screen_names_mnt_id)

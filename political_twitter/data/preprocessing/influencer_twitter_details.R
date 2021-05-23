@@ -1,4 +1,9 @@
 
+# Oliver Eaton
+# Begun: 2021-05-22
+
+# File to gather twitter details from chosen political leaders.
+
 # Get Twitter Details -----------------------------------------------------
 
 # First read in details from db
@@ -29,3 +34,6 @@ dt_new <- lookup_users(influencer_id$user_id) %>%
 
 # Influencer twitter details
 influencer_twitter_details <- bind_rows(dt_new, dt_old)
+
+# Drop unused objects
+rm(dt_old, dt_new)
