@@ -16,17 +16,17 @@ g_frnds <- function(u_id){
   all_friends = NULL
   
   while(fetched_friends < n_friends)  {
-    
+
     if(rate_limit("get_friends")$remaining == 0) {
       print(paste0("API limit reached. Reseting at ", rate_limit("get_friends")$reset_at))
       Sys.sleep(as.numeric((rate_limit("get_friends")$reset + 0.1) * 60))
     }
-    
+
     curr_friends <- get_friends(u_id, n = 5000, retryonratelimit = TRUE, page = curr_page)
     i <- i + 1
-    all_friends <- rbind(all_friends, curr_friends)
+    all_friends <- bind_rows(all_friends, curr_friends)
     fetched_friends <- nrow(all_friends)
-    print(paste0(i, ". ", fetched_friends, " out of ", n_friends, " fetched."))
+    # print(paste0(i, ". ", fetched_friends, " out of ", n_friends, " fetched."))
     curr_page <- next_cursor(curr_friends)
   }
   distinct(all_friends)
@@ -44,7 +44,7 @@ dbReadTable(sql_con, "influencer_friends") %>%
 
 # Second gather friends from twitter
 fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) %>%  
-  rename(user_id = user, friend_user_id = user_id) 
+  rename(user_id = user, friend_user_id = user_id)
 
 # Third compare lists from first and second step
 ## New friendships

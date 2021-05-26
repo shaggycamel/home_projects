@@ -10,9 +10,9 @@
 # Start timer
 start_time <- Sys.time()
 
-library(tidyverse)
-library(rtweet)
-library(RMySQL)
+library(tidyverse, quietly = TRUE)
+library(rtweet, quietly = TRUE)
+library(RMySQL, quietly = TRUE)
 
 # rtweet configuration
 source(here::here("data", "config", ".rtweet_config.R"))
@@ -28,7 +28,6 @@ source(here::here("data", "preprocessing", "influencer_twitter_tweets.R"))
 source(here::here("data", "preprocessing", "influencer_twitter_friends.R"))
 source(here::here("data", "preprocessing", "influencer_twitter_mentions.R"))
 
-
 # Write to Database -------------------------------------------------------
 
 write_to_db <- function(table){
@@ -41,23 +40,22 @@ write_to_db <- function(table){
   )
 }
 
-write_to_db(influencer_id)
 write_to_db(influencer_twitter_details)
 write_to_db(influencer_tweets)
 write_to_db(influencer_friends)
 write_to_db(influencer_mentions)
-
 
 # Log File ----------------------------------------------------------------
 
 # End timer
 end_time <- Sys.time()
 
-# Print number of rows to log file
+# Print to log file
 write(
   paste(
-    Sys.Date()
-    , round(end_time - start_time, 2)
+    start_time
+    , end_time
+    , round(difftime(end_time, start_time, units = "secs"),2)
     , nrow(influencer_id)
     , nrow(influencer_twitter_details)
     , nrow(influencer_tweets)
@@ -70,7 +68,5 @@ write(
 )
 
 # Print complete message
-print("political_twitter database updated...")
-
-
+print(paste0(Sys.Date(), ": political_twitter database updated..."))
 
