@@ -10,15 +10,13 @@
 # Start timer
 start_time <- Sys.time()
 
-library(tidyverse, quietly = TRUE)
-library(rtweet, quietly = TRUE)
-library(RMySQL, quietly = TRUE)
+library(tidyverse)
 
 # rtweet configuration
 source(here::here("data", "config", ".rtweet_config.R"))
 
-# Connection to MySQL database
-sql_con = dbConnect(MySQL(), user = "oli", dbname = "political_twitter")
+# database functions
+source(here::here("data", "preprocessing", "database_functions.R"))
 
 # Preprocessing -----------------------------------------------------------
 
@@ -30,20 +28,10 @@ source(here::here("data", "preprocessing", "influencer_twitter_mentions.R"))
 
 # Write to Database -------------------------------------------------------
 
-write_to_db <- function(table){
-  dbWriteTable(
-    sql_con
-    , deparse(substitute(table))
-    , table
-    , row.names = FALSE
-    , overwrite = TRUE
-  )
-}
-
-write_to_db(influencer_twitter_details)
-write_to_db(influencer_tweets)
-write_to_db(influencer_friends)
-write_to_db(influencer_mentions)
+write_table(influencer_twitter_details)
+write_table(influencer_tweets)
+write_table(influencer_friends)
+write_table(influencer_mentions)
 
 # Log File ----------------------------------------------------------------
 

@@ -7,8 +7,7 @@
 # Get Tweets --------------------------------------------------------------
 
 # First read in tweets from database
-tw_old <- dbReadTable(sql_con, "influencer_tweets") %>% 
-  mutate(across(contains("created_at"), as.POSIXct))
+tw_old <- read_table("influencer_tweets")
 
 # Second get latest tweet_id for each user from old_tw
 tw_id <- tw_old %>% 

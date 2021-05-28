@@ -7,8 +7,7 @@
 # Get Mentions ------------------------------------------------------------
 
 # First read in mentions from database
-mnt_old <- dbReadTable(sql_con, "influencer_mentions") %>%
-  mutate(across(contains("created_at"), as.POSIXct))
+mnt_old <- read_table("influencer_mentions")
 
 # Second get latest mention_id for each user from mnt_old
 mnt_id <- mnt_old %>%

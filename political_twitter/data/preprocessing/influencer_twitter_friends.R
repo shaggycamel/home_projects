@@ -32,10 +32,8 @@ g_frnds <- function(u_id){
   distinct(all_friends)
 }
 
-
 # First read in friends from db
-dbReadTable(sql_con, "influencer_friends") %>% 
-  mutate(across(starts_with("date"), as.Date)) %>% {
+read_table("influencer_friends") %>% {
     fr_csd <<- filter((.), !is.na(date_friendship_ceased))
     fr_old <<- filter((.), is.na(date_friendship_ceased))
   }

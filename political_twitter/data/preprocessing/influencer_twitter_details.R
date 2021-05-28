@@ -7,14 +7,10 @@
 # Get Twitter Details -----------------------------------------------------
 
 # First read in details from db
-dt_old <- dbReadTable(sql_con, "influencer_twitter_details") %>% 
-  mutate(
-    as_of_date = as.Date(as_of_date)
-    , account_created_at = as.POSIXct(account_created_at)
-  )
+dt_old <- read_table("influencer_twitter_details")
 
 # Second gather details from twitter
-dt_new <- lookup_users(influencer_id$user_id) %>% 
+dt_new <- lookup_users(influencer_id$user_id) %>%
   select(
     user_id
     , account_created_at
@@ -28,8 +24,8 @@ dt_new <- lookup_users(influencer_id$user_id) %>%
     , listed_count
     , statuses_count
     , favourites_count
-  ) %>% 
-  mutate(as_of_date = Sys.Date()) %>% 
+  ) %>%
+  mutate(as_of_date = as.POSIXct(Sys.Date())) %>%
   relocate(as_of_date)
 
 # Influencer twitter details
