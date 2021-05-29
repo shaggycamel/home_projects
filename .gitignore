@@ -4,4 +4,4 @@
 *config.R
 .Rproj.user
 *rsconnect
-*.log
+*.*log

@@ -51,7 +51,7 @@ write(
     , nrow(influencer_mentions)
     , sep = "\t"
   )
-  , file = here::here(".log")
+  , file = here::here(".r_log")
   , append = TRUE
 )
 
