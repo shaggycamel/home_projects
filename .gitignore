@@ -4,4 +4,5 @@
 *config.R
 .Rproj.user
 *rsconnect
-*.*log
+*.logs
+*.shell_scripts

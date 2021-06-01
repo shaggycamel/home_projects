@@ -26,7 +26,7 @@ g_frnds <- function(u_id){
     i <- i + 1
     all_friends <- bind_rows(all_friends, curr_friends)
     fetched_friends <- nrow(all_friends)
-    # print(paste0(i, ". ", fetched_friends, " out of ", n_friends, " fetched."))
+    print(paste0(i, ". ", fetched_friends, " out of ", n_friends, " fetched for user: ", u_id))
     curr_page <- next_cursor(curr_friends)
   }
   distinct(all_friends)
