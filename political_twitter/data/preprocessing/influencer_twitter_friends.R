@@ -7,7 +7,7 @@
 # Get Friends -------------------------------------------------------------
 
 # Gather Friends function
-g_frnds <- function(u_id){
+g_frnds <- \(u_id){
   
   n_friends = lookup_users(u_id)$friends_count
   curr_page = -1
@@ -22,18 +22,25 @@ g_frnds <- function(u_id){
       Sys.sleep(as.numeric((rate_limit("get_friends")$reset + 0.1) * 60))
     }
 
-    curr_friends <- get_friends(u_id, n = 5000, retryonratelimit = TRUE, page = curr_page)
     i <- i + 1
+    curr_friends <- get_friends(u_id, n = 5000, retryonratelimit = TRUE, page = curr_page)
     all_friends <- bind_rows(all_friends, curr_friends)
     fetched_friends <- nrow(all_friends)
     print(paste0(i, ". ", fetched_friends, " out of ", n_friends, " fetched for user: ", u_id))
+    
+    # Error handling
+    if(nrow(curr_friends) == 0){
+      print("Error handling...")
+      break
+    }
     curr_page <- next_cursor(curr_friends)
+    
   }
   distinct(all_friends)
 }
 
 # First read in friends from db
-read_table("influencer_friends") %>% {
+read_table("influencer_friends") %>% { # leave old pipe here
     fr_csd <<- filter((.), !is.na(date_friendship_ceased))
     fr_old <<- filter((.), is.na(date_friendship_ceased))
   }
@@ -41,7 +48,7 @@ read_table("influencer_friends") %>% {
 # where a user re-kindles that friendship.
 
 # Second gather friends from twitter
-fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) %>%  
+fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) |>  
   rename(user_id = user, friend_user_id = user_id)
 
 # Third compare lists from first and second step
@@ -49,9 +56,9 @@ fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) %>%
 fr_new <- map_df(influencer_id$user_id, ~ {
   
   setdiff(
-    fr_new_tmp %>% filter(user_id == .x)
-    , fr_old %>% select(contains("user_id")) %>% filter(user_id == .x)
-  ) %>% 
+    fr_new_tmp |> filter(user_id == .x)
+    , fr_old |> select(contains("user_id")) |> filter(user_id == .x)
+  ) |> 
     mutate(
       date_friendship_began = Sys.Date()
       , date_friendship_ceased = NA
@@ -63,8 +70,8 @@ fr_new <- map_df(influencer_id$user_id, ~ {
 walk(influencer_id$user_id, ~{
   
   fr_rem <- setdiff(
-    fr_old %>% filter(user_id == .x) %>% select(contains("user_id"))
-    , fr_new_tmp %>% filter(user_id == .x)
+    fr_old |> filter(user_id == .x) |> select(contains("user_id"))
+    , fr_new_tmp |> filter(user_id == .x)
   )
   
   fr_old$date_friendship_ceased[

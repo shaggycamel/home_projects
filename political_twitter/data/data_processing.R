@@ -51,10 +51,9 @@ write(
     , nrow(influencer_mentions)
     , sep = "\t"
   )
-  , file = here::here(".logs/r_log")
+  , file = here::here(".logs/r.log")
   , append = TRUE
 )
 
 # Print complete message
 print(paste0(Sys.Date(), ": political_twitter database updated..."))
-

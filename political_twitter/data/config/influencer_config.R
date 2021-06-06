@@ -36,8 +36,8 @@ influencers <- c(
 )
 
 
-# influencer_id <-  lookup_users(influencers) %>%
-#   select(user_id) %>%
+# influencer_id <-  lookup_users(influencers) |>
+#   select(user_id) |>
 #   mutate(
 #     research_inclusion_date = Sys.Date()
 #     , research_exclusion_date = NA_character_
