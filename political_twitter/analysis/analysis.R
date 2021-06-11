@@ -8,6 +8,7 @@
 
 library(tidyverse)
 library(tidytext)
+library(cld2)
 
 # Database functions
 source(here::here("data", "preprocessing", "database_functions.R"))
@@ -57,12 +58,31 @@ ggplot(friend_index, aes(x = as_of_date, y = friend_index, colour = screen_name)
 
 
 # Mention Sentiment -------------------------------------------------------
+# Remove URLs, remove foreign language tweets.
+# Concat tweets that have the same tweet_id but different text, try find out 
+# which tweet should come first in that sequence 
+
+# To detect language cld2 package (could also try franc)
+
 
 mnt_anl <- filter(mentions,  is_retweet==FALSE) |> 
-  select(status_id, text, mentions_user_id_single) |> 
-  unnest_tokens(word, text) |> 
-  anti_join(get_stopwords()) |> 
-  inner_join(get_sentiments("bing"), by = "word")
+  select(status_id, created_at, mentions_user_id_single, text) |> 
+  mutate(
+    # Remove handles mentioned
+    text = str_to_lower(str_squish(str_remove_all(text, "@[\\w\\d]+")))
+    # Remove URLS
+    , text = str_squish(str_remove_all(text, "https?\\S*"))
+    # Detect language
+    , language = detect_language(text)
+  ) |> 
+  filter(language == "en")
+
+
+
+
+  # unnest_tokens(word, text, token = "sentences") |> 
+  # anti_join(get_stopwords()) |> 
+  # inner_join(get_sentiments("bing"), by = "word")
 
 
 sentiment_ratio <- mnt_anl |> 
@@ -72,6 +92,8 @@ sentiment_ratio <- mnt_anl |>
     details |> select(user_id, name)
     , by = c("mentions_user_id_single"="user_id")
   )
+
+
 
 
 
