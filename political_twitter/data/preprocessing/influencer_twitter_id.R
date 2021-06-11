@@ -8,6 +8,7 @@
 # Get Twitter id ----------------------------------------------------------
 
 influencer_id <- read_table("influencer_id") |> 
+  filter(is.na(research_exclusion_date)) |>
   arrange(desc(user_id))
 
 # Figure out how to handle influencers that have been

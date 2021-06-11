@@ -10,7 +10,7 @@
 tw_old <- read_table("influencer_tweets")
 
 # Second get latest tweet_id for each user from old_tw
-tw_id <- tw_old |> 
+tw_id <- left_join(influencer_id["user_id"], tw_old, by = "user_id") |>
   group_by(user_id) |> 
   slice_max(order_by = ~ -status_id, with_ties = FALSE) |> 
   select(user_id, status_id, created_at)

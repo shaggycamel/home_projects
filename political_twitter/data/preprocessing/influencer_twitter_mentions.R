@@ -10,7 +10,8 @@
 mnt_old <- read_table("influencer_mentions")
 
 # Second get latest mention_id for each user from mnt_old
-mnt_id <- mnt_old |>
+
+mnt_id <- left_join(select(influencer_id, mentions_user_id_single=user_id), mnt_old, by = "mentions_user_id_single") |> 
   group_by(mentions_user_id_single) |>
   slice_max(order_by = ~ -status_id, with_ties = FALSE) |> 
   select(mentions_user_id_single, mention_status_id = status_id, mention_created_at = created_at)

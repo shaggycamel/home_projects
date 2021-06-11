@@ -7,7 +7,7 @@
 # Get Friends -------------------------------------------------------------
 
 # Gather Friends function
-g_frnds <- \(u_id){
+g_frnds <- function(u_id){
   
   n_friends = lookup_users(u_id)$friends_count
   curr_page = -1
