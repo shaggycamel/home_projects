@@ -23,6 +23,7 @@ tw_new <- map2_df(
 ) |> 
   mutate(across(where(is.list), as.character))
 
+
 # Influencer tweets
 influencer_tweets <- bind_rows(tw_new, tw_old)
 
