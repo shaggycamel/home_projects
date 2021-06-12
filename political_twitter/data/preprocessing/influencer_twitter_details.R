@@ -33,3 +33,5 @@ influencer_twitter_details <- bind_rows(dt_new, dt_old)
 
 # Drop unused objects
 rm(dt_old, dt_new)
+
+

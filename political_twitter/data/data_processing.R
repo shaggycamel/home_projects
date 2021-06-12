@@ -37,13 +37,14 @@ write_table(influencer_mentions)
 
 # End timer
 end_time <- Sys.time()
+total_time <- round(difftime(end_time, start_time, units = "secs"),2)
 
 # Print to log file
 write(
   paste(
     start_time
     , end_time
-    , round(difftime(end_time, start_time, units = "secs"),2)
+    , total_time
     , nrow(influencer_id)
     , nrow(influencer_twitter_details)
     , nrow(influencer_tweets)
@@ -57,3 +58,4 @@ write(
 
 # Print complete message
 print(paste0(Sys.Date(), ": political_twitter database updated..."))
+print(total_time)
