@@ -4,6 +4,11 @@
 
 # File to gather twitter friends of chosen political leaders.
 
+# Init message ------------------------------------------------------------
+
+print("Influencer twitter friends...")
+print("")
+
 # Get Friends -------------------------------------------------------------
 
 # Gather Friends function

@@ -9,6 +9,9 @@
 library(tidyverse)
 library(tidytext)
 library(cld2)
+library(SnowballC)
+library(textstem)
+library(wordcloud2)
 
 # Database functions
 source(here::here("data", "preprocessing", "database_functions.R"))
@@ -25,6 +28,10 @@ pols <- read_csv(
   here::here("data", "influencer_political_details.csv")
   , col_types = cols(twitter_id = col_character())
 )
+
+# Think about removing retweets from database
+table(mentions$is_retweet)
+table(tweets$is_retweet)
 
 # Friendship change rate --------------------------------------------------
 
@@ -94,6 +101,38 @@ sentiment_ratio <- mnt_anl |>
   )
 
 
+# Tweet topic modelling ---------------------------------------------------
+
+# Remove punctuation, emojis, urls, handles, stopwords, numbers
+# stem, lem, potentially remove words less than 3 in length
+# remove hashtag words
+anl_twt <- filter(tweets, is_retweet == FALSE) |> 
+  select(user_id, screen_name, status_id, created_at, text) |> 
+  mutate(
+    text = str_to_lower(text)
+    # Remove twitter handles
+    , text = str_remove_all(text, "@[\\w\\d]+")
+    # Remove URLS
+    , text = str_remove_all(text, "https?\\S*")
+    # Remove numbers
+    , text = str_remove_all(text, "[:digit:]")
+    # Remove punctuation
+    , text = str_remove_all(text, "[:punct:]")
+    # Remove emoji (ascii characters)
+    , text = textclean::replace_non_ascii(text)
+  ) |> 
+  unnest_tokens(word, text, token = "words") |> 
+  anti_join(get_stopwords(), by = "word") |> 
+  filter(
+    !str_detect(word, "[:digit:]")
+    , word != "amp"
+  ) |> 
+  mutate(
+    stem_text = wordStem(word)
+    , lem_text = lemmatize_words(word)
+  )
+
+wordcloud2(count(anl_twt, stem_text))
 
 
-
+# Now do tf-idf

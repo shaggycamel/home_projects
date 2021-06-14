@@ -4,9 +4,12 @@
 
 # File to host functions that interact with the database
 
-# Environ -----------------------------------------------------------------
+# Init message ------------------------------------------------------------
 
-library(RMySQL)
+print("Custom database functions...")
+print("")
+
+# Environ -----------------------------------------------------------------
 
 # Connection to MySQL database
 sql_con = dbConnect(MySQL(), user = "oli", dbname = "political_twitter")

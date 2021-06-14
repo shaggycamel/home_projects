@@ -4,6 +4,11 @@
 
 # File to obtain twitter mentions of chosen political leaders.
 
+# Init message ------------------------------------------------------------
+
+print("Influencer twitter mentions...")
+print("")
+
 # Get Mentions ------------------------------------------------------------
 
 # First read in mentions from database

@@ -1,7 +1,7 @@
 
 # Oliver Eaton
 # Begun: 2021-05-14
-
+#
 # Driver file to gather tweets from political leaders across
 # Australia and New Zealand
 
@@ -10,21 +10,23 @@
 # Start timer
 start_time <- Sys.time()
 
-library(tidyverse)
+# Package management
+packages <- read.delim("./package_management/data_processing.dep", header = FALSE)[[1]]
+source("./package_management/pacman_script.R")
 
 # rtweet configuration
-source(here::here("data", "config", ".rtweet_config.R"))
+source(here("data", "config", ".rtweet_config.R"))
 
 # database functions
-source(here::here("data", "preprocessing", "database_functions.R"))
+source(here("data", "preprocessing", "database_functions.R"))
 
 # Preprocessing -----------------------------------------------------------
 
-source(here::here("data", "preprocessing", "influencer_twitter_id.R"))
-source(here::here("data", "preprocessing", "influencer_twitter_details.R"))
-source(here::here("data", "preprocessing", "influencer_twitter_tweets.R"))
-source(here::here("data", "preprocessing", "influencer_twitter_friends.R"))
-source(here::here("data", "preprocessing", "influencer_twitter_mentions.R"))
+source(here("data", "preprocessing", "influencer_twitter_id.R"))
+source(here("data", "preprocessing", "influencer_twitter_details.R"))
+source(here("data", "preprocessing", "influencer_twitter_tweets.R"))
+source(here("data", "preprocessing", "influencer_twitter_friends.R"))
+source(here("data", "preprocessing", "influencer_twitter_mentions.R"))
 
 # Write to Database -------------------------------------------------------
 
@@ -52,10 +54,11 @@ write(
     , nrow(influencer_mentions)
     , sep = "\t"
   )
-  , file = here::here(".logs/r.log")
+  , file = here(".logs/r.log")
   , append = TRUE
 )
 
 # Print complete message
+print("")
 print(paste0(Sys.Date(), ": political_twitter database updated..."))
 print(total_time)

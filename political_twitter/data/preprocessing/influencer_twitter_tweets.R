@@ -4,6 +4,11 @@
 
 # File to gather tweets from chosen political leaders.
 
+# Init message ------------------------------------------------------------
+
+print("Influencer twitter tweets...")
+print("")
+
 # Get Tweets --------------------------------------------------------------
 
 # First read in tweets from database
