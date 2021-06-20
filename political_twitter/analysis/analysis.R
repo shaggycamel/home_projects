@@ -12,6 +12,8 @@ library(cld2)
 library(SnowballC)
 library(textstem)
 library(wordcloud2)
+library(wordcloud)
+library(textclean)
 
 # Database functions
 source(here::here("data", "preprocessing", "database_functions.R"))
@@ -33,44 +35,12 @@ pols <- read_csv(
 table(mentions$is_retweet)
 table(tweets$is_retweet)
 
-# Friendship change rate --------------------------------------------------
-
-details <- left_join(
-  details
-  , pols %>% select(twitter_id, country)
-  , by = c("user_id"="twitter_id")
-)
-
-details %>% 
-  filter(name == "Adam Bandt") %>% 
-  ggplot(aes(x = as_of_date, y = friends_count)) +
-  geom_line()
-
-
-# ( Current f# / Initial f# ) * 100
-
-friend_index <- details |> 
-  select(user_id, screen_name, as_of_date, friends_count) |> 
-  left_join(
-    (details |> 
-      group_by(user_id) |> 
-      filter(as_of_date == min(as_of_date)) |> 
-      select(user_id, f_c_base = friends_count))
-    , by = "user_id"
-  ) |> 
-  mutate(friend_index = (friends_count / f_c_base) * 100)
-
-ggplot(friend_index, aes(x = as_of_date, y = friend_index, colour = screen_name)) +
-  geom_line()
-
-
 # Mention Sentiment -------------------------------------------------------
 # Remove URLs, remove foreign language tweets.
 # Concat tweets that have the same tweet_id but different text, try find out 
 # which tweet should come first in that sequence 
 
 # To detect language cld2 package (could also try franc)
-
 
 mnt_anl <- filter(mentions,  is_retweet==FALSE) |> 
   select(status_id, created_at, mentions_user_id_single, text) |> 
@@ -103,36 +73,62 @@ sentiment_ratio <- mnt_anl |>
 
 # Tweet topic modelling ---------------------------------------------------
 
+z <- "@AxelWilkeNZ @loksabhaspeaker 😢, $100 too brb afk" |> str_to_lower()
+x <- c('look', 'noooooo!', 'real coooool!', "it's sooo goooood", 'fsdfds', 
+       'fdddf', 'as', "aaaahahahahaha", "aabbccxccbbaa", 'I said heyyy!',
+       "I'm liiiike whyyyyy me?", "Wwwhhatttt!", NA)
+
+replace_word_elongation(x)
+replace_word_elongation(x, impart.meaning = TRUE)
+  
+
 # Remove punctuation, emojis, urls, handles, stopwords, numbers
 # stem, lem, potentially remove words less than 3 in length
 # remove hashtag words
-anl_twt <- filter(tweets, is_retweet == FALSE) |> 
-  select(user_id, screen_name, status_id, created_at, text) |> 
+# having a bit of trouble with emojis
+twt_anl <- filter(tweets, is_retweet == FALSE) |> 
+  # select(user_id, screen_name, status_id, created_at, text) |> 
+  select(text) |> 
   mutate(
     text = str_to_lower(text)
-    # Remove twitter handles
-    , text = str_remove_all(text, "@[\\w\\d]+")
+    # Replace ampersands with "and"
+    , text = str_replace_all(text, "&amp;", "and")
+    # Remove twitter handles and hashtags
+    , text = str_remove_all(text, "(@|#)[_a-z0-9]+")
     # Remove URLS
     , text = str_remove_all(text, "https?\\S*")
-    # Remove numbers
-    , text = str_remove_all(text, "[:digit:]")
+    # Replace contractions - turns "it's" into "it is"
+    , text = replace_contraction(text)
+    # Replace internet slang
+    , text = replace_internet_slang(text)
+    # Replace word elongation
+    , text = replace_word_elongation(text)
     # Remove punctuation
     , text = str_remove_all(text, "[:punct:]")
+    # Remove numbers
+    , text = str_remove_all(text, "[:digit:]")
     # Remove emoji (ascii characters)
-    , text = textclean::replace_non_ascii(text)
-  ) |> 
-  unnest_tokens(word, text, token = "words") |> 
-  anti_join(get_stopwords(), by = "word") |> 
-  filter(
-    !str_detect(word, "[:digit:]")
-    , word != "amp"
-  ) |> 
+    , text = replace_non_ascii(text)
+    # Final chance at non-word characters
+    , text = str_replace_all(text, "\\W", " ")
+    # Clean up
+    , text = str_squish(text)
+  ) |>
+  filter(text != "") |> 
+  # Cant get this working
+  mutate(text = str_replace_all(text, c(
+    "nz"="new-zealand"
+    , "new-zealand"="new zealand"
+    , "aus" = "autralia"
+  ))) |> 
+  unnest_tokens(word, text, token = "words") |>
+  anti_join(get_stopwords(), by = "word") |>
   mutate(
     stem_text = wordStem(word)
     , lem_text = lemmatize_words(word)
   )
 
-wordcloud2(count(anl_twt, stem_text))
+wordcloud(filter(count(twt_anl, word), n > 400))
 
 
 # Now do tf-idf
