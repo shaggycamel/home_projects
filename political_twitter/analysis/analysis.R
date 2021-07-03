@@ -14,6 +14,7 @@ library(textstem)
 library(wordcloud2)
 library(wordcloud)
 library(textclean)
+library(tm)
 
 # Database functions
 source(here::here("data", "preprocessing", "database_functions.R"))
@@ -73,19 +74,6 @@ sentiment_ratio <- mnt_anl |>
 
 # Tweet topic modelling ---------------------------------------------------
 
-z <- "@AxelWilkeNZ @loksabhaspeaker 😢, $100 too brb afk" |> str_to_lower()
-x <- c('look', 'noooooo!', 'real coooool!', "it's sooo goooood", 'fsdfds', 
-       'fdddf', 'as', "aaaahahahahaha", "aabbccxccbbaa", 'I said heyyy!',
-       "I'm liiiike whyyyyy me?", "Wwwhhatttt!", NA)
-
-replace_word_elongation(x)
-replace_word_elongation(x, impart.meaning = TRUE)
-  
-
-# Remove punctuation, emojis, urls, handles, stopwords, numbers
-# stem, lem, potentially remove words less than 3 in length
-# remove hashtag words
-# having a bit of trouble with emojis
 twt_anl <- filter(tweets, is_retweet == FALSE) |> 
   # select(user_id, screen_name, status_id, created_at, text) |> 
   select(text) |> 
@@ -99,36 +87,36 @@ twt_anl <- filter(tweets, is_retweet == FALSE) |>
     , text = str_remove_all(text, "https?\\S*")
     # Replace contractions - turns "it's" into "it is"
     , text = replace_contraction(text)
-    # Replace internet slang
+    # Replace internet slang - omg = oh my god
     , text = replace_internet_slang(text)
     # Replace word elongation
     , text = replace_word_elongation(text)
+    # Remove emoji (ascii characters)
+    , text = replace_non_ascii(text)
     # Remove punctuation
     , text = str_remove_all(text, "[:punct:]")
     # Remove numbers
     , text = str_remove_all(text, "[:digit:]")
-    # Remove emoji (ascii characters)
-    , text = replace_non_ascii(text)
     # Final chance at non-word characters
     , text = str_replace_all(text, "\\W", " ")
     # Clean up
     , text = str_squish(text)
   ) |>
   filter(text != "") |> 
-  # Cant get this working
   mutate(text = str_replace_all(text, c(
-    "nz"="new-zealand"
-    , "new-zealand"="new zealand"
-    , "aus" = "autralia"
+    "\\bnz"="new-zealand"
+    , "new zealand"="new-zealand"
+    , "\\baus\\b" = "autralia"
   ))) |> 
-  unnest_tokens(word, text, token = "words") |>
+  # Unnest by space, unnestting by word split apart "new-zealand"
+  unnest_tokens(word, text, token = "regex", pattern = " ") |>
   anti_join(get_stopwords(), by = "word") |>
   mutate(
     stem_text = wordStem(word)
     , lem_text = lemmatize_words(word)
   )
-
-wordcloud(filter(count(twt_anl, word), n > 400))
-
+  
+# Looks at including more stop words....
+wordcloud2(slice_max(count(twt_anl, stem_text), order_by=n, n=100))
 
 # Now do tf-idf
