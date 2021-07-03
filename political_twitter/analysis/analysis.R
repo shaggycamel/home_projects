@@ -106,17 +106,22 @@ twt_anl <- filter(tweets, is_retweet == FALSE) |>
   mutate(text = str_replace_all(text, c(
     "\\bnz"="new-zealand"
     , "new zealand"="new-zealand"
-    , "\\baus\\b" = "autralia"
+    , "\\baus\\b"="autralia"
+    , "\\bgovt"="government" 
   ))) |> 
   # Unnest by space, unnestting by word split apart "new-zealand"
   unnest_tokens(word, text, token = "regex", pattern = " ") |>
-  anti_join(get_stopwords(), by = "word") |>
+  filter(!word %in% stopwords::stopwords("en", "stopwords-iso")) |> 
+  # anti_join(get_stopwords(), by = "word") |>
   mutate(
     stem_text = wordStem(word)
     , lem_text = lemmatize_words(word)
   )
   
-# Looks at including more stop words....
 wordcloud2(slice_max(count(twt_anl, stem_text), order_by=n, n=100))
 
+# Now do bi and tri grams
+
 # Now do tf-idf
+
+
