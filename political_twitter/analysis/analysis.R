@@ -15,6 +15,7 @@ library(wordcloud2)
 library(wordcloud)
 library(textclean)
 library(tm)
+library(doc2vec)
 
 # Database functions
 source(here::here("data", "preprocessing", "database_functions.R"))
@@ -124,4 +125,5 @@ wordcloud2(slice_max(count(twt_anl, stem_text), order_by=n, n=100))
 
 # Now do tf-idf
 
+top2vec(sample_n(select(tweets, doc_id = status_id, text), size = 100))
 
