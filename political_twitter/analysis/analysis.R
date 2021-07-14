@@ -76,8 +76,8 @@ sentiment_ratio <- mnt_anl |>
 # Tweet topic modelling ---------------------------------------------------
 
 twt_anl <- filter(tweets, is_retweet == FALSE) |> 
-  # select(user_id, screen_name, status_id, created_at, text) |> 
-  select(text) |> 
+  filter(created_at > max(created_at) - lubridate::days(30)) |> 
+  select(status_id, text) |> 
   mutate(
     text = str_to_lower(text)
     # Replace ampersands with "and"
@@ -111,19 +111,39 @@ twt_anl <- filter(tweets, is_retweet == FALSE) |>
     , "\\bgovt"="government" 
   ))) |> 
   # Unnest by space, unnestting by word split apart "new-zealand"
-  unnest_tokens(word, text, token = "regex", pattern = " ") |>
-  filter(!word %in% stopwords::stopwords("en", "stopwords-iso")) |> 
-  # anti_join(get_stopwords(), by = "word") |>
-  mutate(
-    stem_text = wordStem(word)
-    , lem_text = lemmatize_words(word)
-  )
+  unnest_tokens(text, text, drop = FALSE, token = "regex", pattern = " ") |>
+  filter(!text %in% stopwords::stopwords("en", "stopwords-iso")) |> 
+  mutate(text = wordStem(text)) |> 
+  filter(!str_detect(text, c("govern|morrison|scott|australia|minist")))
   
-wordcloud2(slice_max(count(twt_anl, stem_text), order_by=n, n=100))
+wordcloud2(slice_max(count(twt_anl, text), order_by=n, n=100))
 
-# Now do bi and tri grams
+# tf-idf
+tf_idf <- count(twt_anl, status_id, text) |> 
+  # get rid of small tweets after cleaning
+  anti_join(filter(count(twt_anl, status_id), n <= 5), by = "status_id") |> 
+  bind_tf_idf(text, status_id, n) |> 
+  group_by(status_id) |> 
+  slice_max(order_by = tf_idf, n = 3) |> 
+  ungroup() |> 
+  count(text, sort = TRUE)
 
-# Now do tf-idf
+# topic modelling
+library(stm)
+library(quanteda)
 
-top2vec(sample_n(select(tweets, doc_id = status_id, text), size = 100))
+twt_dfm <- count(twt_anl, status_id, text, sort = TRUE) |> 
+  cast_dfm(status_id, text, n)
 
+topic_model <- stm(twt_dfm, K = 3, init.type = "LDA")
+
+td_beta <- tidy(topic_model) |> 
+  group_by(topic) |> 
+  slice_max(order_by = beta, n = 10)
+head(td_beta, 30)
+
+td_gamma <- tidy(topic_model, matrix = "gamma", document_names = rownames(twt_dfm))
+
+twt_topics <- group_by(td_gamma, document) |> 
+  slice_max(order_by = gamma, n = 1)
+view(twt_topics)
