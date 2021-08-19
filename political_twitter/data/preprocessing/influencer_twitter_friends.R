@@ -41,7 +41,9 @@ g_frnds <- function(u_id){
     curr_page <- next_cursor(curr_friends)
     
   }
-  distinct(all_friends)
+  # Sometimes all_friends can be NULL, so it is wrapped in this 
+  # try block to resume if distinct method fails.
+  try(distinct(all_friends), silent = TRUE)
 }
 
 # First read in friends from db
