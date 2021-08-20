@@ -9,10 +9,13 @@
 print("Influencer twitter friends...")
 print("")
 
+options(error = recover)
+
 # Get Friends -------------------------------------------------------------
 
 # Gather Friends function
 g_frnds <- function(u_id){
+  
   
   n_friends = lookup_users(u_id)$friends_count
   curr_page = -1
@@ -53,7 +56,7 @@ read_table("influencer_friends") %>% { # leave old pipe here
 # where a user re-kindles that friendship.
 
 # Second gather friends from twitter
-fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) |>  
+fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ debug(g_frnds(u_id = .x))) |>  
   rename(user_id = user, friend_user_id = user_id)
 
 # Third compare lists from first and second step

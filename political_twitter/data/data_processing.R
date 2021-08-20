@@ -25,15 +25,15 @@ source(here("data", "preprocessing", "database_functions.R"))
 source(here("data", "preprocessing", "influencer_twitter_id.R"))
 source(here("data", "preprocessing", "influencer_twitter_details.R"))
 source(here("data", "preprocessing", "influencer_twitter_tweets.R"))
-source(here("data", "preprocessing", "influencer_twitter_friends.R")) |> try()
+source(here("data", "preprocessing", "influencer_twitter_friends.R"))
 source(here("data", "preprocessing", "influencer_twitter_mentions.R"))
 
 # Write to Database -------------------------------------------------------
 
-write_table(influencer_twitter_details)
-write_table(influencer_tweets)
-write_table(influencer_friends)
-write_table(influencer_mentions)
+# write_table(influencer_twitter_details)
+# write_table(influencer_tweets)
+# write_table(influencer_friends)
+# write_table(influencer_mentions)
 
 # Log File ----------------------------------------------------------------
 
@@ -42,21 +42,21 @@ end_time <- Sys.time()
 total_time <- round(difftime(end_time, start_time, units = "secs"),2)
 
 # Print to log file
-write(
-  paste(
-    start_time
-    , end_time
-    , total_time
-    , nrow(influencer_id)
-    , nrow(influencer_twitter_details)
-    , nrow(influencer_tweets)
-    , nrow(influencer_friends)
-    , nrow(influencer_mentions)
-    , sep = "\t"
-  )
-  , file = here(".logs/r.log")
-  , append = TRUE
-)
+# write(
+#   paste(
+#     start_time
+#     , end_time
+#     , total_time
+#     , nrow(influencer_id)
+#     , nrow(influencer_twitter_details)
+#     , nrow(influencer_tweets)
+#     , nrow(influencer_friends)
+#     , nrow(influencer_mentions)
+#     , sep = "\t"
+#   )
+#   , file = here(".logs/r.log")
+#   , append = TRUE
+# )
 
 # Print complete message
 print("")
