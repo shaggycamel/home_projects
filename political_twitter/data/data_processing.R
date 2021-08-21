@@ -32,7 +32,7 @@ source(here("data", "preprocessing", "influencer_twitter_mentions.R"))
 
 write_table(influencer_twitter_details)
 write_table(influencer_tweets)
-write_table(influencer_friends)
+write_table(influencer_friends) |> try()
 write_table(influencer_mentions)
 
 # Log File ----------------------------------------------------------------
