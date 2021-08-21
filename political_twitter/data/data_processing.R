@@ -39,7 +39,7 @@ write_table(influencer_mentions)
 
 # End timer
 end_time <- Sys.time()
-total_time <- round(difftime(end_time, start_time, units = "secs"),2)
+total_time <- round(difftime(end_time, start_time, units = "secs"), 2)
 
 # Print to log file
 write(
@@ -50,7 +50,7 @@ write(
     , nrow(influencer_id)
     , nrow(influencer_twitter_details)
     , nrow(influencer_tweets)
-    , nrow(influencer_friends)
+    , nrow(influencer_friends) |> try()
     , nrow(influencer_mentions)
     , sep = "\t"
   )
