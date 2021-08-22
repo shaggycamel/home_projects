@@ -21,9 +21,10 @@ g_frnds <- function(u_id){
   i = 0
   all_friends = NULL
   
-  if(n_friends == 0)
+  if(n_friends == 0){
     all_friends = NULL
-  else {
+    print(paste0("Zero friends for user: ", u_id))
+  } else {
     while(fetched_friends < n_friends)  {
   
       if(rate_limit("get_friends")$remaining == 0) {
