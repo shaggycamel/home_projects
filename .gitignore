@@ -6,3 +6,4 @@
 *rsconnect
 *.logs
 *.shell_scripts
+github_token.txt
