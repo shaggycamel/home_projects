@@ -5,7 +5,7 @@
 # File to gather twitter friends of chosen political leaders.
 
 # Init message ------------------------------------------------------------
-
+options(error=recover)
 print("Influencer twitter friends...")
 print("")
 
@@ -13,7 +13,7 @@ print("")
 
 # Gather Friends function
 g_frnds <- function(u_id){
-  
+  options(error=recover)
   
   n_friends = lookup_users(u_id)$friends_count
   curr_page = -1
