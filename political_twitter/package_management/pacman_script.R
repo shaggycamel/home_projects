@@ -21,3 +21,4 @@ sapply(packages, require, character.only = TRUE)
 
 # Remove packages vector
 rm(packages)
+print("")
