@@ -14,7 +14,6 @@ print("")
 # Gather Friends function
 g_frnds <- function(u_id){
   
-  
   n_friends = lookup_users(u_id)$friends_count
   curr_page = -1
   fetched_friends = 0
@@ -22,8 +21,10 @@ g_frnds <- function(u_id){
   all_friends = NULL
   
   if(n_friends == 0){
-    all_friends = NULL
+    
     print(paste0("Zero friends for user: ", u_id))
+    tibble(user = as.character(u_id), user_id = NA_character_)
+    
   } else {
     while(fetched_friends < n_friends)  {
   
@@ -59,6 +60,7 @@ read_table("influencer_friends") %>% { # leave old pipe here
 # where a user re-kindles that friendship.
 
 # Second gather friends from twitter
+
 fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) |>  
   rename(user_id = user, friend_user_id = user_id)
 

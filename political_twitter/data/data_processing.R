@@ -12,7 +12,7 @@ start_time <- Sys.time()
 
 # Package management
 packages <- read.delim("./package_management/data_processing.dep", header = FALSE)[[1]]
-source("./package_management/pacman_script.R")
+source("./package_management/pacman_script.R") |> suppressWarnings()
 
 # rtweet configuration
 source(here("data", "config", ".rtweet_config.R"))
@@ -25,7 +25,7 @@ source(here("data", "preprocessing", "database_functions.R"))
 source(here("data", "preprocessing", "influencer_twitter_id.R")) |> try()
 source(here("data", "preprocessing", "influencer_twitter_details.R")) |> try()
 source(here("data", "preprocessing", "influencer_twitter_tweets.R")) |> try()
-source(here("data", "preprocessing", "influencer_twitter_friends.R")) |> try()
+source(here("data", "preprocessing", "influencer_twitter_friends.R")) |>  try()
 source(here("data", "preprocessing", "influencer_twitter_mentions.R")) |> try()
 
 # Write to Database -------------------------------------------------------
