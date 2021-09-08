@@ -9,7 +9,10 @@
 print("Custom database functions...")
 print("")
 
+
 # Environ -----------------------------------------------------------------
+
+library(RMySQL)
 
 # Connection to MySQL database
 sql_con = dbConnect(MySQL(), user = "oli", dbname = "political_twitter")
