@@ -10,9 +10,9 @@ library(tidyverse)
 library(tidytext)
 library(textclean)
 library(widyr)
-
-# Database functions
-source(here::here("data", "preprocessing", "database_functions.R"))
+here::here()
+source(here::here("data", "preprocessing", "database_functions.R")) # Database functions
+source(here::here("functions", "help.R")) # Helper functions
 
 # Read in data
 influencer_tweets <- read_table("influencer_tweets")
@@ -21,20 +21,20 @@ influencer_mentions <- read_table("influencer_mentions")
 
 # Set dataframes for analysis ---------------------------------------------
 
-# Working df
-df <- bind_rows(
-  distinct(filter(influencer_tweets, created_at >= '2021-08-01'), status_id, text)
-  , distinct(filter(influencer_mentions, created_at >= '2021-08-01'), status_id, text)
-) |> 
-  filter(str_detect(text, "#"))
+df_prep <- function(df) {
+  hash_at_link_ratio(df) |> 
+    filter(created_at >= (Sys.Date() - 30), str_detect(text, "#")) |> 
+    distinct(status_id, text)
+}
 
+# Working df
+df <- bind_rows(df_prep(influencer_tweets), df_prep(influencer_mentions))
 
 # hashtag df
 hashtag_df <- unnest_tweets(df, input = text, output = hashtag) |> 
   filter(str_starts(hashtag, "#")) |> 
-  distinct()
-# Filter out hashtags with low count
-# Remove emoji from hashtags
+  distinct() |> 
+  mutate(hashtag = str_remove_all(hashtag, pattern = "[:emoji:]"))
 
 # word df
 word_df <- mutate(df, language = cld2::detect_language(text)) |> 
@@ -44,7 +44,6 @@ word_df <- mutate(df, language = cld2::detect_language(text)) |>
     , text = str_remove_all(text, "(@|#)[_a-z0-9]+")
     # , text = replace_names(text)
     , text = replace_email(text)
-    # , text = replace_non_ascii(text)
     , text = replace_word_elongation(text)
     , text = replace_contraction(text)
     # , text = replace_hash(text)
@@ -55,30 +54,30 @@ word_df <- mutate(df, language = cld2::detect_language(text)) |>
   select(-language) |> 
   unnest_tweets(input = text, output = word, strip_url = TRUE) |> 
   filter(str_detect(word, "\\W", negate = TRUE)) |> 
-  mutate(word = textstem::stem_words(word)) |> 
-  {\(.) left_join(., count(., word), by = "word")}() |> 
-  filter(n > 3) |> 
-  select(-n)
+  mutate(word = textstem::stem_words(word))
           
 
 # Bag of words ------------------------------------------------------------
 
 # tf_idf
 tfidf <- left_join(hashtag_df, word_df, by ="status_id") |> 
-  select(-status_id) |> 
+  select(-status_id) |>
   na.omit() |> 
   with_groups(c(hashtag, word), ~ summarise(.x, n = n())) |> 
   bind_tf_idf(word, hashtag, n) |> 
   anti_join(stop_words, by = "word") ###
 
 # cosine similarity
-(similarity <- pairwise_similarity(tfidf, hashtag, word, tf_idf) |> 
+similarity <- pairwise_similarity(tfidf, hashtag, word, tf_idf) |> 
   na.omit() |> 
   filter(similarity >= 0.05) |> 
-  arrange(item1, desc(similarity))) |> 
-  group_by(item1) |> 
-  slice_max(similarity) |> 
-  view("")
+  arrange(item1, desc(similarity))
 
-km <- widely_kmeans(similarity, item1, item2, similarity, k = 20, fill = 0)
-count(km, cluster)
+# K-means
+set.seed(123)
+km <- map(5:20, ~ widely_kmeans(similarity, item1, item2, similarity, k = .x, fill = 0))
+map(km, ~ count(.x, cluster))
+
+km[[5]] |> view()
+
+
