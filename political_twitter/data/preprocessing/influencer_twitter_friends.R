@@ -20,35 +20,42 @@ g_frnds <- function(u_id){
   i = 0
   all_friends = NULL
   
-  while(fetched_friends < n_friends)  {
-
-    if(rate_limit("get_friends")$remaining == 0) {
-      print(paste0("API limit reached. Reseting at ", rate_limit("get_friends")$reset_at))
-      Sys.sleep(as.numeric((rate_limit("get_friends")$reset + 0.1) * 60))
-    }
-
-    i <- i + 1
-    curr_friends <- get_friends(u_id, n = 5000, retryonratelimit = TRUE, page = curr_page)
-    all_friends <- bind_rows(all_friends, curr_friends)
-    fetched_friends <- nrow(all_friends)
-    print(paste0(i, ". ", fetched_friends, " out of ", n_friends, " fetched for user: ", u_id))
+  if(n_friends == 0){
     
-    # Error handling
-    if(nrow(curr_friends) == 0){
-      print("Error handling...")
-      break
-    }
-    curr_page <- next_cursor(curr_friends)
+    print(paste0("Zero friends for user: ", u_id))
+    tibble(user = as.character(u_id), user_id = NA_character_)
     
+  } else {
+    while(fetched_friends < n_friends)  {
+      
+      if(rate_limit("get_friends")$remaining == 0) {
+        print(paste0("API limit reached. Reseting at ", rate_limit("get_friends")$reset_at))
+        Sys.sleep(as.numeric((rate_limit("get_friends")$reset + 0.1) * 60))
+      }
+      
+      i <- i + 1
+      curr_friends <- get_friends(u_id, n = 5000, retryonratelimit = TRUE, page = curr_page)
+      all_friends <- bind_rows(all_friends, curr_friends)
+      fetched_friends <- nrow(all_friends)
+      print(paste0(i, ". ", fetched_friends, " out of ", n_friends, " fetched for user: ", u_id))
+      
+      # Error handling
+      if(nrow(curr_friends) == 0){
+        print("Error handling...")
+        break
+      }
+      curr_page <- next_cursor(curr_friends)
+      
+    }
+    distinct(all_friends)
   }
-  distinct(all_friends)
 }
 
 # First read in friends from db
-read_table("influencer_friends") %>% { # leave old pipe here
-    fr_csd <<- filter((.), !is.na(date_friendship_ceased))
-    fr_old <<- filter((.), is.na(date_friendship_ceased))
-  }
+read_table("influencer_friends") |> {\(.){
+    fr_csd <<- dplyr::filter(., !is.na(date_friendship_ceased))
+    fr_old <<- dplyr::filter(., is.na(date_friendship_ceased))
+}}()
 # Ceased friendships are separated so it doesn't affect the situation
 # where a user re-kindles that friendship.
 
