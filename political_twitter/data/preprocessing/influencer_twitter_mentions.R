@@ -50,10 +50,10 @@ mnt_new <- map2_df(
   separate_rows(mentions_user_id_single) |>
   relocate(mentions_user_id_single, .after = mentions_user_id) |> 
   
-  # Filter to exclude non-influencers # and retweets
+  # Filter to exclude non-influencers and retweets
   filter(
     mentions_user_id_single %in% (influencer_id$user_id)
-    #, is_retweet == FALSE
+    , is_retweet == FALSE
   ) |> 
   distinct()
 

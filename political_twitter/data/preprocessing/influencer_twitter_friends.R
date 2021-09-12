@@ -27,12 +27,12 @@ g_frnds <- function(u_id){
     
   } else {
     while(fetched_friends < n_friends)  {
-      
+
       if(rate_limit("get_friends")$remaining == 0) {
         print(paste0("API limit reached. Reseting at ", rate_limit("get_friends")$reset_at))
         Sys.sleep(as.numeric((rate_limit("get_friends")$reset + 0.1) * 60))
       }
-      
+
       i <- i + 1
       curr_friends <- get_friends(u_id, n = 5000, retryonratelimit = TRUE, page = curr_page)
       all_friends <- bind_rows(all_friends, curr_friends)
@@ -60,6 +60,7 @@ read_table("influencer_friends") |> {\(.){
 # where a user re-kindles that friendship.
 
 # Second gather friends from twitter
+
 fr_new_tmp <- map_df(.x = influencer_id$user_id, ~ g_frnds(u_id = .x)) |>  
   rename(user_id = user, friend_user_id = user_id)
 

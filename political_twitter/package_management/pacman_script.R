@@ -13,7 +13,7 @@ print("")
 # Package management ------------------------------------------------------
 
 # Install packages
-lapply(packages, \(p) if(!require(p)) install.packages(p)) |> 
+lapply(packages, \(p) if(require(p)) install.packages(p)) |> 
   invisible()
 
 # Load packages
@@ -21,3 +21,4 @@ sapply(packages, require, character.only = TRUE)
 
 # Remove packages vector
 rm(packages)
+print("")
