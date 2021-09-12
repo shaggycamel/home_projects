@@ -10,8 +10,8 @@ library(tidyverse)
 library(tidytext)
 library(textclean)
 library(widyr)
-here::here()
-source(here::here("data", "preprocessing", "database_functions.R")) # Database functions
+
+source(here::here("functions", "database_functions.R")) # Database functions
 source(here::here("functions", "help.R")) # Helper functions
 
 # Read in data
@@ -65,13 +65,15 @@ tfidf <- left_join(hashtag_df, word_df, by ="status_id") |>
   na.omit() |> 
   with_groups(c(hashtag, word), ~ summarise(.x, n = n())) |> 
   bind_tf_idf(word, hashtag, n) |> 
-  anti_join(stop_words, by = "word") ###
+  anti_join(stop_words, by = "word")
 
 # cosine similarity
 similarity <- pairwise_similarity(tfidf, hashtag, word, tf_idf) |> 
   na.omit() |> 
   filter(similarity >= 0.05) |> 
-  arrange(item1, desc(similarity))
+  arrange(item2, desc(similarity))
+
+widely_kmeans(similarity, item1, item2, similarity, k = 10, fill = 0)
 
 # K-means
 set.seed(123)
@@ -79,5 +81,4 @@ km <- map(5:20, ~ widely_kmeans(similarity, item1, item2, similarity, k = .x, fi
 map(km, ~ count(.x, cluster))
 
 km[[5]] |> view()
-
 
