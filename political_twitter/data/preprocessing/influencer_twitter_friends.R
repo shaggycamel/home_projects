@@ -27,12 +27,12 @@ g_frnds <- function(u_id){
     
   } else {
     while(fetched_friends < n_friends)  {
-  
+
       if(rate_limit("get_friends")$remaining == 0) {
         print(paste0("API limit reached. Reseting at ", rate_limit("get_friends")$reset_at))
         Sys.sleep(as.numeric((rate_limit("get_friends")$reset + 0.1) * 60))
       }
-  
+
       i <- i + 1
       curr_friends <- get_friends(u_id, n = 5000, retryonratelimit = TRUE, page = curr_page)
       all_friends <- bind_rows(all_friends, curr_friends)
@@ -52,10 +52,10 @@ g_frnds <- function(u_id){
 }
 
 # First read in friends from db
-read_table("influencer_friends") %>% { # leave old pipe here
-    fr_csd <<- filter((.), !is.na(date_friendship_ceased))
-    fr_old <<- filter((.), is.na(date_friendship_ceased))
-  }
+read_table("influencer_friends") |> {\(.){
+    fr_csd <<- dplyr::filter(., !is.na(date_friendship_ceased))
+    fr_old <<- dplyr::filter(., is.na(date_friendship_ceased))
+}}()
 # Ceased friendships are separated so it doesn't affect the situation
 # where a user re-kindles that friendship.
 

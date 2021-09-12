@@ -18,7 +18,7 @@ source("./package_management/pacman_script.R") |> suppressWarnings()
 source(here("data", "config", ".rtweet_config.R"))
 
 # database functions
-source(here("data", "preprocessing", "database_functions.R"))
+source(here("functions", "database_functions.R"))
 
 # Preprocessing -----------------------------------------------------------
 
