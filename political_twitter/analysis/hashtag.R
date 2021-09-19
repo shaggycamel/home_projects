@@ -10,6 +10,7 @@ library(tidyverse)
 library(tidytext)
 library(textclean)
 library(widyr)
+library(tidymodels)
 
 source(here::here("functions", "database_functions.R")) # Database functions
 source(here::here("functions", "help.R")) # Helper functions
@@ -21,14 +22,14 @@ influencer_mentions <- read_table("influencer_mentions")
 
 # Set dataframes for analysis ---------------------------------------------
 
-df_prep <- function(df) {
-  hash_at_link_ratio(df) |> 
-    filter(created_at >= (Sys.Date() - 30), str_detect(text, "#")) |> 
+df_prep <- function(df, hash) {
+  tmp <- hash_at_link_ratio(df) |> 
+    filter(created_at >= (Sys.Date() - 30), str_detect(text, "#", negate = !hash)) |> 
     distinct(status_id, text)
 }
 
 # Working df
-df <- bind_rows(df_prep(influencer_tweets), df_prep(influencer_mentions))
+df <- bind_rows(df_prep(influencer_tweets, TRUE), df_prep(influencer_mentions, TRUE))
 
 # hashtag df
 hashtag_df <- unnest_tweets(df, input = text, output = hashtag) |> 
@@ -46,6 +47,7 @@ word_df <- mutate(df, language = cld2::detect_language(text)) |>
     , text = replace_email(text)
     , text = replace_word_elongation(text)
     , text = replace_contraction(text)
+    , text = replace_non_ascii(text)
     # , text = replace_hash(text)
     , text = str_remove_all(text, "[:digit:]")
   ) |> 
@@ -53,7 +55,7 @@ word_df <- mutate(df, language = cld2::detect_language(text)) |>
   filter(strip(text) != "") |> 
   select(-language) |> 
   unnest_tweets(input = text, output = word, strip_url = TRUE) |> 
-  filter(str_detect(word, "\\W", negate = TRUE)) |> 
+  filter(str_detect(word, "\\W", negate = TRUE), word != "") |> 
   mutate(word = textstem::stem_words(word))
           
 
@@ -73,12 +75,43 @@ similarity <- pairwise_similarity(tfidf, hashtag, word, tf_idf) |>
   filter(similarity >= 0.05) |> 
   arrange(item2, desc(similarity))
 
-widely_kmeans(similarity, item1, item2, similarity, k = 10, fill = 0)
-
-# K-means
+# K-means  ->>>>>> Need to fine tune this. There is always one large group
 set.seed(123)
-km <- map(5:20, ~ widely_kmeans(similarity, item1, item2, similarity, k = .x, fill = 0))
-map(km, ~ count(.x, cluster))
+# km <- map(5:20, ~ widely_kmeans(similarity, item1, item2, similarity, k = .x, fill = 0))
+# map(km, ~ count(.x, cluster))
+km <- widely_kmeans(similarity, item1, item2, similarity, k = 12, fill = 0)
+count(km, cluster)
 
-km[[5]] |> view()
+
+# Decision Tree -----------------------------------------------------------
+
+# Join hash clusters to word groups
+cluster_hash <- left_join(
+  select(km, hashtag = item1, cluster)
+  , select(tfidf, hashtag, word, n)
+) |> 
+  group_by(.cluster = cluster, word) |> 
+  summarise(n = sum(n)) |>  # keep hashtag in data.. sum at cluster, tag, word level
+  arrange(word) |> 
+  pivot_wider(names_from = word, values_from = n, values_fill = 0)
+
+
+test_df <- bind_rows(df_prep(influencer_tweets, FALSE), df_prep(influencer_mentions, FALSE)) |> 
+  clean_text() |> 
+  filter(word != "") |> 
+  count(status_id, word) |> 
+  arrange(word) |> 
+  pivot_wider(names_from = word, values_from = n, values_fill = 0)
+  # select(status_id, any_of(colnames(cluster_hash)))
+
+ncol(cluster_hash)
+ncol(test_df)
+
+
+tree <- decision_tree(mode = "classification")
+tree_fit <- fit(tree, .cluster ~ ., data = cluster_hash)
+
+topcs_preds <- predict(tree_fit, new_data = test_df)
+
+
 

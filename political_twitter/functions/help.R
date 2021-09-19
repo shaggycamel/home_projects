@@ -6,7 +6,7 @@
 
 # Hash, @, link ratio -----------------------------------------------------
 
-hash_at_link_ratio <-  function(df){
+hash_at_link_ratio <- function(df){
   
   df |> 
     mutate(
@@ -18,3 +18,28 @@ hash_at_link_ratio <-  function(df){
   
 }
 
+
+clean_text <- function(df){
+  
+  df |> 
+    mutate(language = cld2::detect_language(text)) |> 
+    filter(language == "en") |> 
+    mutate(
+      text = str_replace_all(text, "&amp;", "and")
+      , text = str_remove_all(text, "(@|#)[_a-z0-9]+")
+      # , text = replace_names(text)
+      , text = replace_email(text)
+      , text = replace_word_elongation(text)
+      , text = replace_contraction(text)
+      , text = replace_non_ascii(text)
+      # , text = replace_hash(text)
+      , text = str_remove_all(text, "[:digit:]")
+    ) |> 
+    na.omit() |> 
+    filter(strip(text) != "") |> 
+    select(-language) |> 
+    unnest_tweets(input = text, output = word, strip_url = TRUE) |> 
+    filter(str_detect(word, "\\W", negate = TRUE), strip(word) != "") |> 
+    mutate(word = textstem::stem_words(word))
+  
+}
