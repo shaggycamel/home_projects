@@ -57,7 +57,7 @@ word_df <- mutate(df, language = cld2::detect_language(text)) |>
   unnest_tweets(input = text, output = word, strip_url = TRUE) |> 
   filter(str_detect(word, "\\W", negate = TRUE), word != "") |> 
   mutate(word = textstem::stem_words(word))
-          
+
 
 # Bag of words ------------------------------------------------------------
 
@@ -85,33 +85,32 @@ count(km, cluster)
 
 # Decision Tree -----------------------------------------------------------
 
-# Join hash clusters to word groups
-cluster_hash <- left_join(
-  select(km, hashtag = item1, cluster)
+# Join hash clusters to word groups & pivot wider
+sp <- left_join(
+  select(km, .cluster = cluster, .hashtag = item1)
   , select(tfidf, hashtag, word, n)
+  , by = c(".hashtag"="hashtag")
 ) |> 
-  group_by(.cluster = cluster, word) |> 
-  summarise(n = sum(n)) |>  # keep hashtag in data.. sum at cluster, tag, word level
-  arrange(word) |> 
-  pivot_wider(names_from = word, values_from = n, values_fill = 0)
+  arrange(.cluster, .hashtag, word) |> 
+  pivot_wider(names_from = word, values_from = n)
+
 
 
 test_df <- bind_rows(df_prep(influencer_tweets, FALSE), df_prep(influencer_mentions, FALSE)) |> 
   clean_text() |> 
   filter(word != "") |> 
+  semi_join(data.frame(word = colnames(sp))) |> 
   count(status_id, word) |> 
   arrange(word) |> 
-  pivot_wider(names_from = word, values_from = n, values_fill = 0)
-  # select(status_id, any_of(colnames(cluster_hash)))
+  pivot_wider(names_from = word, values_from = n)
 
-ncol(cluster_hash)
-ncol(test_df)
+# columns in train that aren't in test
+setdiff(colnames(sp), colnames(test_df))
+t <- select(sp, .cluster, all_of(colnames(test_df)[-1]))
 
-
-tree <- decision_tree(mode = "classification")
-tree_fit <- fit(tree, .cluster ~ ., data = cluster_hash)
-
+tree <- decision_tree(mode = "classification", tree_depth = 5)
+tree_fit <- fit(tree, .cluster ~ ., data = t)
 topcs_preds <- predict(tree_fit, new_data = test_df)
 
 
-
+count(topcs_preds, .pred_class)
