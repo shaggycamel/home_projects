@@ -12,7 +12,8 @@ library(textclean)
 library(janitor)
 library(widyr)
 library(tidymodels)
-library(Matrix)
+library(igraph)
+library(ggraph)
 
 source(here::here("functions", "database_functions.R")) # Database functions
 source(here::here("functions", "help.R")) # Helper functions
@@ -42,79 +43,52 @@ hashtag_df <- unnest_tweets(df, input = text, output = hashtag) |>
 
 # word df
 word_df <- clean_text(df) |> 
-  unnest_tweets(input = text, output = word, strip_url = TRUE) |> 
-  filter(str_detect(word, "\\W", negate = TRUE), word != "") |> 
-  mutate(word = textstem::stem_words(word))
-          
+  mutate(word = textstem::stem_words(word)) |> 
+  filter(word != "")      
 
-# Bag of words ------------------------------------------------------------
+
+# Hashtag Similarity ------------------------------------------------------
 
 # tf_idf
-tfidf <- left_join(hashtag_df, word_df, by ="status_id") |> 
+tfidf <- left_join(hashtag_df, word_df, by ="status_id") |>
   select(-status_id) |>
   na.omit() |> 
   with_groups(c(hashtag, word), ~ summarise(.x, n = n())) |> 
   bind_tf_idf(word, hashtag, n) |> 
   anti_join(stop_words, by = "word")
 
-# cosine similarity
+# cosine similarity - Hashtags that use similar words
+# 1 = similar; 0 = not similar
 similarity <- pairwise_similarity(tfidf, hashtag, word, tf_idf) |> 
-  na.omit() |>
-  filter(similarity >= 0.05) |>
-  rename(.h1 = item1, .h2 = item2) |>
-  arrange(.h2, desc(similarity)) |> 
-  rowwise() |>
-  mutate(c = as.character(list(sort(c(.h1, .h2))))) |> 
+  rename(.h_compared = item1, .h_to = item2) |>
+  replace_na(list(similarity = 0)) |> 
+  arrange(.h_compared, desc(similarity))
+
+slim_sim <- filter(similarity, similarity >= 0.7) |> 
+  rowwise() |> 
+  mutate(c = as.character(list(sort(c(.h_compared, .h_to))))) |> 
   with_groups(c, ~ mutate(.x, c_c = row_number())) |> 
   filter(c_c == 1) |> 
-  select(!ends_with("c")) |> 
-  pivot_wider(names_from = .h2, values_from = similarity, values_fill = 0)
-  # Maybe apply min max scaling
-
-#hmmmm
-k <- kmeans(column_to_rownames(similarity, ".h1"), centers = 50)
-k$withinss
-k$size
+  select(-ends_with("c"))
 
 
+# Similar Hashtag Network -------------------------------------------------
 
-# K-means  ->>>>>> Need to fine tune this. There is always one large group
-set.seed(123)
-# km <- map(5:20, ~ widely_kmeans(similarity, item1, item2, similarity, k = .x, fill = 0))
-# map(km, ~ count(.x, cluster))
-km <- widely_kmeans(similarity, item1, item2, similarity, k = 12, fill = 0)
-count(km, cluster)
+# create undirected graph object
+grph <- graph_from_data_frame(slim_sim, directed = FALSE)
+plot(grph, layout = layout_with_gem(grph))
 
 
-# Decision Tree -----------------------------------------------------------
+# K-means -----------------------------------------------------------------
 
-# Join hash clusters to word groups & pivot wider
-sp <- left_join(
-  select(km, .cluster = cluster, .hashtag = item1)
-  , select(tfidf, hashtag, word, n)
-  , by = c(".hashtag"="hashtag")
-) |> 
-  arrange(.cluster, .hashtag, word) |> 
-  pivot_wider(names_from = word, values_from = n)
+library(parameters)
 
+tfidf_wide <- rename(tfidf, .hashtag=hashtag) |> 
+  pivot_wider(id_cols = .hashtag, names_from = word, values_from = tf_idf, values_fill = 0)
 
+n_clust <- n_clusters(tfidf_wide[,-1], n_max = 15:30, iter.max = 1000)
+km <- kmeans(tfidf_wide[,-1], centers = 27)
+km$size
 
-test_df <- bind_rows(df_prep(influencer_tweets, FALSE), df_prep(influencer_mentions, FALSE)) |> 
-  clean_text() |> 
-  filter(word != "") |> 
-  semi_join(data.frame(word = colnames(sp))) |> 
-  count(status_id, word) |> 
-  arrange(word) |> 
-  pivot_wider(names_from = word, values_from = n)
-
-# columns in train that aren't in test
-setdiff(colnames(sp), colnames(test_df))
-
-
-tree <- decision_tree(mode = "classification")
-tree_fit <- fit(tree, .cluster ~ ., data = sp)
-
-topcs_preds <- predict(tree_fit, new_data = test_df)
-
-
+bind_cols(tfidf_wide[,1], cluster=km$cluster) |> view()
 
