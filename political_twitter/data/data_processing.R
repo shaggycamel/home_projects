@@ -25,7 +25,7 @@ source(here("functions", "database_functions.R"))
 source(here("data", "preprocessing", "influencer_twitter_id.R")) |> try()
 source(here("data", "preprocessing", "influencer_twitter_details.R")) |> try()
 source(here("data", "preprocessing", "influencer_twitter_tweets.R")) |> try()
-source(here("data", "preprocessing", "influencer_twitter_friends.R")) |>  try()
+# source(here("data", "preprocessing", "influencer_twitter_friends.R")) |>  try()
 source(here("data", "preprocessing", "influencer_twitter_mentions.R")) |> try()
 
 # Write to Database -------------------------------------------------------

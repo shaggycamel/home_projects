@@ -83,12 +83,12 @@ plot(grph, layout = layout_with_gem(grph))
 
 library(parameters)
 
-tfidf_wide <- rename(tfidf, .hashtag=hashtag) |> 
-  pivot_wider(id_cols = .hashtag, names_from = word, values_from = tf_idf, values_fill = 0)
+tfidf_wide <- rename(tfidf, .word=word) |> 
+  pivot_wider(id_cols = .word, names_from = hashtag, values_from = tf_idf, names_repair = "minimal", values_fill = 0)
+# SCALE
 
-n_clust <- n_clusters(tfidf_wide[,-1], n_max = 15:30, iter.max = 1000)
-km <- kmeans(tfidf_wide[,-1], centers = 27)
-km$size
+n_clust <- n_clusters(tfidf_wide[,-1])
+kmeans(tfidf_wide[,-1], centers = 3)
 
-bind_cols(tfidf_wide[,1], cluster=km$cluster) |> view()
+
 
