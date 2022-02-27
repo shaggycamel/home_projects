@@ -1,0 +1,75 @@
+---
+output: vitae::awesomecv
+name: Oliver
+surname: Eaton
+date: "`r format(Sys.time(), '%B %Y')`"
+address: "New Plymouth, New Zealand"
+email: "eat_fred@protonmail.com"
+linkedin: oliver-eaton
+github: shaggycamel
+aboutme: "I am an eager and quick learner with an interest in problem solving by use of statistical and machine learning techniques. My strengths include programming and analytics, creativity towards problem solving, explaining statistical concepts in layman terms and an easy-going personality. My latest achievement is facilitating a course at IAG teaching statistical concepts and upskilling the use of R to other employees."
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(vitae)
+library(readxl)
+library(glue)
+```
+
+```{r functions, include=FALSE}
+xl <- function(sheet) read_excel(here::here("resume_data.xlsx"), sheet = sheet)
+```
+
+# Skillset
+
+```{r}
+detailed_entries(xl("skillset"), what = ability, why = exp)
+```
+
+
+# Employment History
+
+```{r}
+left_join(xl("emp_hist"), arrange(xl("emp_tasks"), order), by = c("with",	"what")) |> 
+  detailed_entries(what, when = paste0(start, "-", end), with = paste0(with, "|", position), where, why = tasks)
+```
+
+
+
+# Education
+
+```{r}
+xl("education") |> 
+  detailed_entries(what, when = paste0(start, "-", substring(end, first = 3, last = 4)), with, where)
+```
+
+# Demonstrated Abilities
+
+```{r}
+xl("abilities_exp") |> 
+  group_by(ability, exp) |> 
+  # mutate(tech = glue_collapse(tech, sep = " \u2022 ")) |> 
+  mutate(tech = glue_collapse(tech, sep = ", ")) |>
+  distinct() |> 
+  ungroup() |> 
+  mutate(tech = paste(exp, tech)) |> 
+  detailed_entries(what = ability, why = tech)
+```
+
+# Personal Achievements
+
+```{r}
+detailed_entries(xl("achievements"), what, when)
+```
+
+
+# Extracurricular Activities
+
+```{r}
+xl("ext_activites") |> 
+  summarise(what = glue_collapse(what, sep = " \u2022 ")) |> 
+  detailed_entries(what)
+```
+
